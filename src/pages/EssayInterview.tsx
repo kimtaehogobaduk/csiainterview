@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, Mic, MicOff, Send, FileText, CheckCircle, RefreshCw } from "lucide-react";
 import Footer from "@/components/Footer";
+import FormattedFeedback from "@/components/FormattedFeedback";
+import ModelSelector from "@/components/ModelSelector";
 
 interface FollowUpItem {
   question: string;
@@ -49,9 +51,9 @@ const FollowUpQuestionCard = ({
             <p className="text-sm text-muted-foreground mb-2">내 답변:</p>
             <p>{item.answer}</p>
           </div>
-          <div className="prose prose-sm max-w-none">
+          <div>
             <p className="text-sm text-muted-foreground mb-2">피드백:</p>
-            <p className="whitespace-pre-wrap">{item.feedback}</p>
+            <FormattedFeedback content={item.feedback} />
           </div>
           {!showInput && (
             <Button onClick={() => setShowInput(true)} variant="outline" className="w-full">
@@ -112,6 +114,7 @@ const EssayInterview = () => {
     feedback: string;
     score: number | null;
   }>>([]);
+  const [selectedModel, setSelectedModel] = useState("google/gemini-2.5-flash");
 
   useEffect(() => {
     loadSavedEssay();
@@ -274,7 +277,8 @@ const EssayInterview = () => {
           question: questions[currentQuestionIndex],
           answer,
           essay: savedEssay,
-          type: 'essay_based'
+          type: 'essay_based',
+          model: selectedModel
         }
       });
 
@@ -343,7 +347,8 @@ const EssayInterview = () => {
           answer: followUpAnswer,
           essay: savedEssay,
           type: 'essay_based',
-          isFollowUp: true
+          isFollowUp: true,
+          model: selectedModel
         }
       });
 
@@ -524,9 +529,7 @@ const EssayInterview = () => {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="prose prose-sm max-w-none">
-                        <p className="whitespace-pre-wrap">{feedback}</p>
-                      </div>
+                      <FormattedFeedback content={feedback} />
                     </CardContent>
                   </Card>
                 )}

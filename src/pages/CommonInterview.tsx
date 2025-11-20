@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { ArrowLeft, Mic, MicOff, RefreshCw, Send } from "lucide-react";
 import { getRandomQuestion } from "@/constants/questions";
 import Footer from "@/components/Footer";
+import FormattedFeedback from "@/components/FormattedFeedback";
+import ModelSelector from "@/components/ModelSelector";
 
 interface FollowUpItem {
   question: string;
@@ -49,9 +51,9 @@ const FollowUpQuestionCard = ({
             <p className="text-sm text-muted-foreground mb-2">내 답변:</p>
             <p>{item.answer}</p>
           </div>
-          <div className="prose prose-sm max-w-none">
+          <div>
             <p className="text-sm text-muted-foreground mb-2">피드백:</p>
-            <p className="whitespace-pre-wrap">{item.feedback}</p>
+            <FormattedFeedback content={item.feedback} />
           </div>
           {!showInput && (
             <Button onClick={() => setShowInput(true)} variant="outline" className="w-full">
@@ -108,6 +110,7 @@ const CommonInterview = () => {
     feedback: string;
     score: number | null;
   }>>([]);
+  const [selectedModel, setSelectedModel] = useState("google/gemini-2.5-flash");
 
   useEffect(() => {
     setQuestion(getRandomQuestion());
@@ -159,7 +162,8 @@ const CommonInterview = () => {
           question: parentQuestion,
           answer: followUpAnswer,
           type: 'common',
-          isFollowUp: true
+          isFollowUp: true,
+          model: selectedModel
         }
       });
 
@@ -209,7 +213,8 @@ const CommonInterview = () => {
         body: {
           question,
           answer,
-          type: 'common'
+          type: 'common',
+          model: selectedModel
         }
       });
 
@@ -257,6 +262,17 @@ const CommonInterview = () => {
         </Button>
 
         <div className="space-y-6">
+          <Card className="shadow-soft">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                면접 설정
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ModelSelector value={selectedModel} onChange={setSelectedModel} />
+            </CardContent>
+          </Card>
+
           <Card className="shadow-soft">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-2xl">공통 면접 질문</CardTitle>
@@ -334,9 +350,7 @@ const CommonInterview = () => {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="prose prose-sm max-w-none">
-                  <p className="whitespace-pre-wrap">{feedback}</p>
-                </div>
+                <FormattedFeedback content={feedback} />
               </CardContent>
             </Card>
           )}

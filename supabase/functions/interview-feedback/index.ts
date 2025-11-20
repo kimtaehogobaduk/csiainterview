@@ -12,7 +12,8 @@ const requestSchema = z.object({
   answer: z.string().trim().min(1).max(2000),
   essay: z.string().trim().max(10000).optional(),
   type: z.enum(['common', 'essay_based']),
-  isFollowUp: z.boolean().optional()
+  isFollowUp: z.boolean().optional(),
+  model: z.string().optional()
 });
 
 serve(async (req) => {
@@ -32,7 +33,7 @@ serve(async (req) => {
       );
     }
     
-    const { question, answer, essay, type, isFollowUp } = validationResult.data;
+    const { question, answer, essay, type, isFollowUp, model } = validationResult.data;
 
     if (!question || !answer) {
       throw new Error('질문과 답변은 필수입니다.');
@@ -176,7 +177,7 @@ ${essay}
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: model || 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
