@@ -170,20 +170,33 @@ ${essay}
 
     console.log('Calling AI with prompt...');
 
+    // Check if model supports temperature parameter
+    const selectedModel = model || 'google/gemini-2.5-flash';
+    const isNewOpenAIModel = selectedModel.includes('gpt-5') || 
+                              selectedModel.includes('gpt-4.1') || 
+                              selectedModel.includes('o3') || 
+                              selectedModel.includes('o4');
+
+    const requestBody: any = {
+      model: selectedModel,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ]
+    };
+
+    // Only add temperature for models that support it
+    if (!isNewOpenAIModel) {
+      requestBody.temperature = 0.7;
+    }
+
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: model || 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.7,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
