@@ -185,6 +185,99 @@ export type Database = {
         }
         Relationships: []
       }
+      mileage_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          reason: string
+          session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          reason: string
+          session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          reason?: string
+          session_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      monthly_leaderboard: {
+        Row: {
+          created_at: string | null
+          id: string
+          month: string
+          rank: number | null
+          total_mileage: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          month: string
+          rank?: number | null
+          total_mileage?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          month?: string
+          rank?: number | null
+          total_mileage?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profile_items: {
+        Row: {
+          config: Json | null
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_available: boolean | null
+          item_type: string
+          name: string
+          price: number
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_available?: boolean | null
+          item_type: string
+          name: string
+          price: number
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_available?: boolean | null
+          item_type?: string
+          name?: string
+          price?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           ai_model: string | null
@@ -193,6 +286,7 @@ export type Database = {
           essay_question_count: number | null
           full_name: string | null
           id: string
+          mileage: number | null
           updated_at: string | null
         }
         Insert: {
@@ -202,6 +296,7 @@ export type Database = {
           essay_question_count?: number | null
           full_name?: string | null
           id: string
+          mileage?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -211,9 +306,88 @@ export type Database = {
           essay_question_count?: number | null
           full_name?: string | null
           id?: string
+          mileage?: number | null
           updated_at?: string | null
         }
         Relationships: []
+      }
+      user_customization: {
+        Row: {
+          avatar_frame_id: string | null
+          badge_id: string | null
+          custom_icon_id: string | null
+          theme_color: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          avatar_frame_id?: string | null
+          badge_id?: string | null
+          custom_icon_id?: string | null
+          theme_color?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          avatar_frame_id?: string | null
+          badge_id?: string | null
+          custom_icon_id?: string | null
+          theme_color?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_customization_avatar_frame_id_fkey"
+            columns: ["avatar_frame_id"]
+            isOneToOne: false
+            referencedRelation: "profile_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_customization_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "profile_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_customization_custom_icon_id_fkey"
+            columns: ["custom_icon_id"]
+            isOneToOne: false
+            referencedRelation: "profile_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_items: {
+        Row: {
+          id: string
+          item_id: string
+          purchased_at: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          item_id: string
+          purchased_at?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          item_id?: string
+          purchased_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "profile_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -271,6 +445,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      award_mileage: {
+        Args: {
+          p_amount: number
+          p_reason: string
+          p_session_id?: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -278,6 +461,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      purchase_item: { Args: { p_item_id: string }; Returns: Json }
+      update_leaderboard_ranks: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user" | "elder"
