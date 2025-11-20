@@ -14,6 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Shield, Users, MessageSquare, FileText, BarChart, Trash2, Send, Download, Eye } from "lucide-react";
 import { toast } from "sonner";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Profile {
   id: string;
@@ -51,6 +52,7 @@ interface AdminMessage {
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -389,39 +391,126 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="users" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="users">사용자</TabsTrigger>
-            <TabsTrigger value="sessions">면접 세션</TabsTrigger>
-            <TabsTrigger value="essays">자기소개서</TabsTrigger>
-            <TabsTrigger value="messages">메시지</TabsTrigger>
+          <TabsList className="w-full justify-start overflow-x-auto">
+            <TabsTrigger value="users" className="min-h-[44px]">사용자</TabsTrigger>
+            <TabsTrigger value="sessions" className="min-h-[44px]">면접 세션</TabsTrigger>
+            <TabsTrigger value="essays" className="min-h-[44px]">자기소개서</TabsTrigger>
+            <TabsTrigger value="messages" className="min-h-[44px]">메시지</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
             <Card>
               <CardHeader>
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
                   <div>
-                    <CardTitle>전체 사용자</CardTitle>
-                    <CardDescription>시스템에 등록된 모든 사용자 목록</CardDescription>
+                    <CardTitle className="text-lg md:text-xl">전체 사용자</CardTitle>
+                    <CardDescription className="text-sm">시스템에 등록된 모든 사용자 목록</CardDescription>
                   </div>
-                  <Button onClick={() => exportToCSV(profiles, "users")} variant="outline" size="sm">
+                  <Button onClick={() => exportToCSV(profiles, "users")} variant="outline" size="sm" className="w-full md:w-auto">
                     <Download className="h-4 w-4 mr-2" />
                     CSV 내보내기
                   </Button>
                 </div>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>이메일</TableHead>
-                      <TableHead>이름</TableHead>
-                      <TableHead>역할</TableHead>
-                      <TableHead>가입일</TableHead>
-                      <TableHead className="text-right">작업</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                {isMobile ? (
+                  <div className="space-y-4">
+                    {profiles.map((profile) => (
+                      <Card key={profile.id} className="bg-muted/30">
+                        <CardHeader className="pb-3">
+                          <div className="space-y-2">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="space-y-1 min-w-0 flex-1">
+                                <CardTitle className="text-sm font-medium truncate">{profile.email}</CardTitle>
+                                <p className="text-xs text-muted-foreground">{profile.full_name || "N/A"}</p>
+                              </div>
+                              <Badge variant={profile.role === "admin" ? "destructive" : profile.role === "elder" ? "secondary" : "outline"}>
+                                {profile.role === "admin" ? "관리자" : profile.role === "elder" ? "장로" : "사용자"}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground">가입일: {formatDate(profile.created_at)}</p>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex flex-col gap-2">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  className="w-full min-h-[44px]"
+                                  onClick={() => {
+                                    setSelectedUserForRole(profile);
+                                    setNewRole(profile.role || "user");
+                                  }}
+                                >
+                                  역할 변경
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-[90vw] md:max-w-md">
+                                <DialogHeader>
+                                  <DialogTitle>사용자 역할 변경</DialogTitle>
+                                  <DialogDescription className="break-words">
+                                    {profile.email}의 역할을 변경합니다.
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <Label>역할 선택</Label>
+                                  <select
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                    value={newRole}
+                                    onChange={(e) => setNewRole(e.target.value)}
+                                  >
+                                    <option value="user">사용자</option>
+                                    <option value="elder">장로</option>
+                                    <option value="admin">관리자</option>
+                                  </select>
+                                  <Button onClick={handleChangeRole} className="w-full min-h-[44px]">
+                                    변경하기
+                                  </Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="sm" className="w-full min-h-[44px]">
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  삭제
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent className="max-w-[90vw] md:max-w-md">
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>사용자 삭제</AlertDialogTitle>
+                                  <AlertDialogDescription className="break-words">
+                                    {profile.email}을 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>취소</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeleteUser(profile.id)}>
+                                    삭제
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>이메일</TableHead>
+                          <TableHead>이름</TableHead>
+                          <TableHead>역할</TableHead>
+                          <TableHead>가입일</TableHead>
+                          <TableHead className="text-right">작업</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
                     {profiles.map((profile) => (
                       <TableRow key={profile.id}>
                         <TableCell className="font-medium">{profile.email}</TableCell>
@@ -497,8 +586,10 @@ const AdminDashboard = () => {
                         </TableCell>
                       </TableRow>
                     ))}
-                  </TableBody>
-                </Table>
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
