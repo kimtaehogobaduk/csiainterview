@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Mic, MicOff, Send, FileText, CheckCircle } from "lucide-react";
+import { ArrowLeft, Mic, MicOff, Send, FileText, CheckCircle, RefreshCw } from "lucide-react";
 
 const EssayInterview = () => {
   const navigate = useNavigate();
@@ -277,8 +277,17 @@ const EssayInterview = () => {
               <div className="space-y-6">
                 <Card className="shadow-soft">
                   <CardHeader>
-                    <CardTitle>
-                      질문 {currentQuestionIndex + 1} / {questions.length}
+                    <CardTitle className="flex items-center justify-between">
+                      <span>질문 {currentQuestionIndex + 1} / {questions.length}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleGenerateQuestions}
+                        disabled={loading}
+                        title="새로운 질문 생성"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
