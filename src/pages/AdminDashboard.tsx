@@ -73,32 +73,52 @@ const AdminDashboard = () => {
   }, []);
 
   const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session?.user) {
-      navigate("/auth");
-      return;
-    }
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      console.log('AdminDashboard - Current session:', session?.user?.email);
+      
+      if (!session?.user) {
+        console.log('AdminDashboard - No session, redirecting to auth');
+        navigate("/auth");
+        return;
+      }
 
-    setUser(session.user);
+      setUser(session.user);
 
-    // Check if user is admin
-    const { data: roleData } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", session.user.id)
-      .eq("role", "admin")
-      .maybeSingle();
+      // Check if user is admin
+      const { data: roleData, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .eq("role", "admin")
+        .maybeSingle();
 
-    if (!roleData) {
-      toast.error("관리자 권한이 없습니다.");
+      console.log('AdminDashboard - Role check:', { roleData, error, userId: session.user.id });
+
+      if (error) {
+        console.error('AdminDashboard - Role check error:', error);
+        toast.error("역할 확인 중 오류가 발생했습니다.");
+        navigate("/");
+        return;
+      }
+
+      if (!roleData) {
+        console.log('AdminDashboard - User is not admin');
+        toast.error("관리자 권한이 없습니다.");
+        navigate("/");
+        return;
+      }
+
+      console.log('AdminDashboard - User is admin, loading data');
+      setIsAdmin(true);
+      setLoading(false);
+      loadAllData();
+    } catch (error) {
+      console.error('AdminDashboard - checkAuth exception:', error);
+      toast.error("인증 확인 중 오류가 발생했습니다.");
       navigate("/");
-      return;
     }
-
-    setIsAdmin(true);
-    setLoading(false);
-    loadAllData();
   };
 
   const loadAllData = async () => {
