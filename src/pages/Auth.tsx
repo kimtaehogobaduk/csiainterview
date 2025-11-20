@@ -6,10 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Footer from "@/components/Footer";
 import logoImage from "@/assets/logo.jpg";
+import { Mail, Clock } from "lucide-react";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -18,6 +20,16 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [dataConsent, setDataConsent] = useState(false);
+  
+  // Verification code states
+  const [showVerification, setShowVerification] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [canResend, setCanResend] = useState(false);
+  const [resendTimer, setResendTimer] = useState(60);
+  
+  // Password reset states
+  const [showResetDialog, setShowResetDialog] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -35,6 +47,22 @@ const Auth = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  useEffect(() => {
+    if (showVerification && !canResend) {
+      const interval = setInterval(() => {
+        setResendTimer((prev) => {
+          if (prev <= 1) {
+            setCanResend(true);
+            return 60;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [showVerification, canResend]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -50,6 +78,31 @@ const Auth = () => {
     }
   };
 
+  const sendVerificationCode = async () => {
+    if (!email) {
+      toast.error("이메일을 입력해주세요.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.functions.invoke('send-verification-code', {
+        body: { email, type: 'signup' }
+      });
+
+      if (error) throw error;
+
+      toast.success("인증 코드가 발송되었습니다.");
+      setShowVerification(true);
+      setCanResend(false);
+      setResendTimer(60);
+    } catch (error: any) {
+      toast.error(error.message || "인증 코드 발송에 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -57,10 +110,25 @@ const Auth = () => {
       toast.error("서비스 이용을 위해 데이터 활용 동의가 필요합니다.");
       return;
     }
-    
+
+    if (!showVerification) {
+      await sendVerificationCode();
+      return;
+    }
+
     setLoading(true);
 
     try {
+      // Verify code first
+      const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-code', {
+        body: { email, code: verificationCode }
+      });
+
+      if (verifyError || !verifyData?.success) {
+        throw new Error("인증 코드가 유효하지 않습니다.");
+      }
+
+      // Sign up
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -69,10 +137,38 @@ const Auth = () => {
           emailRedirectTo: `${window.location.origin}/`
         }
       });
+
       if (error) throw error;
+
       toast.success("회원가입 성공! 로그인해주세요.");
+      setShowVerification(false);
+      setVerificationCode("");
     } catch (error: any) {
       toast.error(error.message || "회원가입에 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    if (!resetEmail) {
+      toast.error("이메일을 입력해주세요.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.functions.invoke('send-reset-email', {
+        body: { email: resetEmail }
+      });
+
+      if (error) throw error;
+
+      toast.success("계정 정보를 이메일로 발송했습니다.");
+      setShowResetDialog(false);
+      setResetEmail("");
+    } catch (error: any) {
+      toast.error(error.message || "요청에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -100,23 +196,24 @@ const Auth = () => {
               <TabsTrigger value="login">로그인</TabsTrigger>
               <TabsTrigger value="signup">회원가입</TabsTrigger>
             </TabsList>
+            
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">이메일</Label>
+                  <Label htmlFor="login-email">이메일</Label>
                   <Input
-                    id="email"
+                    id="login-email"
                     type="email"
-                    placeholder="email@example.com"
+                    placeholder="your@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">비밀번호</Label>
+                  <Label htmlFor="login-password">비밀번호</Label>
                   <Input
-                    id="password"
+                    id="login-password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -124,34 +221,108 @@ const Auth = () => {
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "처리 중..." : "로그인"}
+                  {loading ? "로그인 중..." : "로그인"}
                 </Button>
+                
+                <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+                  <DialogTrigger asChild>
+                    <Button variant="link" className="w-full text-sm">
+                      아이디 / 비밀번호 찾기
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>계정 찾기</DialogTitle>
+                      <DialogDescription>
+                        가입한 이메일로 계정 정보와 비밀번호 재설정 링크를 보내드립니다.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="reset-email">이메일</Label>
+                        <Input
+                          id="reset-email"
+                          type="email"
+                          placeholder="your@email.com"
+                          value={resetEmail}
+                          onChange={(e) => setResetEmail(e.target.value)}
+                        />
+                      </div>
+                      <Button onClick={handlePasswordReset} disabled={loading} className="w-full">
+                        {loading ? "전송 중..." : "계정 정보 받기"}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </form>
             </TabsContent>
+            
             <TabsContent value="signup">
               <form onSubmit={handleSignup} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="fullName">이름</Label>
+                  <Label htmlFor="signup-name">이름</Label>
                   <Input
-                    id="fullName"
+                    id="signup-name"
                     type="text"
                     placeholder="홍길동"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     required
+                    disabled={showVerification}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">이메일</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="email@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      placeholder="your@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      disabled={showVerification}
+                    />
+                    {showVerification && canResend && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={sendVerificationCode}
+                        disabled={loading}
+                      >
+                        재전송
+                      </Button>
+                    )}
+                  </div>
+                  {showVerification && !canResend && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      {resendTimer}초 후 재전송 가능
+                    </div>
+                  )}
                 </div>
+
+                {showVerification && (
+                  <div className="space-y-2">
+                    <Label htmlFor="verification-code">인증 코드</Label>
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="verification-code"
+                        type="text"
+                        placeholder="6자리 코드"
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value)}
+                        maxLength={6}
+                        required
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      이메일로 발송된 6자리 코드를 입력하세요.
+                    </p>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">비밀번호</Label>
                   <Input
@@ -160,24 +331,27 @@ const Auth = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    disabled={showVerification}
                   />
                 </div>
-                <div className="flex items-start space-x-2 border rounded-md p-3 bg-muted/30">
+                
+                <div className="flex items-center space-x-2">
                   <Checkbox 
-                    id="data-consent" 
+                    id="consent" 
                     checked={dataConsent}
                     onCheckedChange={(checked) => setDataConsent(checked as boolean)}
-                    required
+                    disabled={showVerification}
                   />
-                  <Label 
-                    htmlFor="data-consent" 
-                    className="text-sm leading-relaxed cursor-pointer"
+                  <label
+                    htmlFor="consent"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                   >
-                    더 나은 서비스 품질을 위해 익명화된 이용 데이터를 분석·연구 목적으로 활용할 수 있습니다.
-                  </Label>
+                    개인정보 수집 및 활용 동의 (필수)
+                  </label>
                 </div>
-                <Button type="submit" className="w-full" disabled={loading || !dataConsent}>
-                  {loading ? "처리 중..." : "회원가입"}
+                
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "처리 중..." : showVerification ? "회원가입 완료" : "인증 코드 받기"}
                 </Button>
               </form>
             </TabsContent>
