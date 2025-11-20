@@ -15,6 +15,7 @@ const CommonInterview = () => {
   const [answer, setAnswer] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [score, setScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [recognition, setRecognition] = useState<any>(null);
 
@@ -51,6 +52,7 @@ const CommonInterview = () => {
     setQuestion(getRandomQuestion());
     setAnswer("");
     setFeedback("");
+    setScore(null);
   };
 
   const toggleRecording = () => {
@@ -88,6 +90,7 @@ const CommonInterview = () => {
       if (error) throw error;
 
       setFeedback(data.feedback);
+      setScore(data.score);
       
       // Save session
       const { data: { user } } = await supabase.auth.getUser();
@@ -99,7 +102,8 @@ const CommonInterview = () => {
             session_type: 'common',
             question,
             answer,
-            ai_feedback: data.feedback
+            ai_feedback: data.feedback,
+            score: data.score
           });
 
         if (saveError) throw saveError;
@@ -194,7 +198,14 @@ const CommonInterview = () => {
           {feedback && (
             <Card className="shadow-soft border-primary/20">
               <CardHeader>
-                <CardTitle className="text-primary">AI 피드백</CardTitle>
+                <CardTitle className="text-primary flex items-center justify-between">
+                  AI 피드백
+                  {score !== null && (
+                    <span className="text-2xl font-bold">
+                      {score}점
+                    </span>
+                  )}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="prose prose-sm max-w-none">
