@@ -6,7 +6,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Users, MessageSquare, FileText, BarChart } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Shield, Users, MessageSquare, FileText, BarChart, Trash2, Send, Download, Eye } from "lucide-react";
 import { toast } from "sonner";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
@@ -53,6 +58,11 @@ const AdminDashboard = () => {
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
   const [essays, setEssays] = useState<Essay[]>([]);
   const [messages, setMessages] = useState<AdminMessage[]>([]);
+  
+  const [replyMessage, setReplyMessage] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedEssay, setSelectedEssay] = useState<Essay | null>(null);
+  const [editedEssayContent, setEditedEssayContent] = useState("");
 
   useEffect(() => {
     checkAuth();
@@ -131,6 +141,96 @@ const AdminDashboard = () => {
   const formatDate = (date: string | null) => {
     if (!date) return "N/A";
     return new Date(date).toLocaleString("ko-KR");
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      // Delete in order: sessions, essays, messages, roles, profile
+      await supabase.from("interview_sessions").delete().eq("user_id", userId);
+      await supabase.from("essays").delete().eq("user_id", userId);
+      await supabase.from("admin_messages").delete().eq("user_id", userId);
+      await supabase.from("user_roles").delete().eq("user_id", userId);
+      const { error } = await supabase.from("profiles").delete().eq("id", userId);
+      
+      if (error) throw error;
+      
+      toast.success("사용자가 삭제되었습니다.");
+      loadAllData();
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error("사용자 삭제 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleSendReply = async () => {
+    if (!selectedUserId || !replyMessage.trim()) {
+      toast.error("메시지를 입력해주세요.");
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from("admin_messages").insert({
+        user_id: selectedUserId,
+        message: replyMessage,
+        is_from_admin: true,
+      });
+
+      if (error) throw error;
+
+      toast.success("답변이 전송되었습니다.");
+      setReplyMessage("");
+      setSelectedUserId(null);
+      loadAllData();
+    } catch (error) {
+      console.error("Reply error:", error);
+      toast.error("답변 전송 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleUpdateEssay = async () => {
+    if (!selectedEssay || !editedEssayContent.trim()) {
+      toast.error("내용을 입력해주세요.");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("essays")
+        .update({ content: editedEssayContent })
+        .eq("id", selectedEssay.id);
+
+      if (error) throw error;
+
+      toast.success("자기소개서가 수정되었습니다.");
+      setSelectedEssay(null);
+      loadAllData();
+    } catch (error) {
+      console.error("Update error:", error);
+      toast.error("자기소개서 수정 중 오류가 발생했습니다.");
+    }
+  };
+
+  const exportToCSV = (data: any[], filename: string) => {
+    if (data.length === 0) {
+      toast.error("내보낼 데이터가 없습니다.");
+      return;
+    }
+
+    const headers = Object.keys(data[0]).join(",");
+    const rows = data.map(row => 
+      Object.values(row).map(val => 
+        typeof val === 'string' ? `"${val.replace(/"/g, '""')}"` : val
+      ).join(",")
+    );
+    
+    const csv = [headers, ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${filename}_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    
+    toast.success("데이터를 내보냈습니다.");
   };
 
   if (loading) {
@@ -224,8 +324,16 @@ const AdminDashboard = () => {
           <TabsContent value="users">
             <Card>
               <CardHeader>
-                <CardTitle>전체 사용자</CardTitle>
-                <CardDescription>시스템에 등록된 모든 사용자 목록</CardDescription>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>전체 사용자</CardTitle>
+                    <CardDescription>시스템에 등록된 모든 사용자 목록</CardDescription>
+                  </div>
+                  <Button onClick={() => exportToCSV(profiles, "users")} variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    CSV 내보내기
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -234,6 +342,7 @@ const AdminDashboard = () => {
                       <TableHead>이메일</TableHead>
                       <TableHead>이름</TableHead>
                       <TableHead>가입일</TableHead>
+                      <TableHead className="text-right">작업</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -242,6 +351,30 @@ const AdminDashboard = () => {
                         <TableCell className="font-medium">{profile.email}</TableCell>
                         <TableCell>{profile.full_name || "N/A"}</TableCell>
                         <TableCell>{formatDate(profile.created_at)}</TableCell>
+                        <TableCell className="text-right">
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="destructive" size="sm">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>사용자 삭제</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {profile.email} 사용자와 관련된 모든 데이터(세션, 에세이, 메시지)가 삭제됩니다. 
+                                  이 작업은 되돌릴 수 없습니다.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>취소</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteUser(profile.id)}>
+                                  삭제
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -253,8 +386,16 @@ const AdminDashboard = () => {
           <TabsContent value="sessions">
             <Card>
               <CardHeader>
-                <CardTitle>면접 세션 기록</CardTitle>
-                <CardDescription>전체 사용자의 면접 연습 기록</CardDescription>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>면접 세션 기록</CardTitle>
+                    <CardDescription>전체 사용자의 면접 연습 기록</CardDescription>
+                  </div>
+                  <Button onClick={() => exportToCSV(sessions, "sessions")} variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    CSV 내보내기
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -307,20 +448,74 @@ const AdminDashboard = () => {
           <TabsContent value="essays">
             <Card>
               <CardHeader>
-                <CardTitle>자기소개서</CardTitle>
-                <CardDescription>전체 사용자의 자기소개서</CardDescription>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>자기소개서</CardTitle>
+                    <CardDescription>전체 사용자의 자기소개서</CardDescription>
+                  </div>
+                  <Button onClick={() => exportToCSV(essays, "essays")} variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    CSV 내보내기
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {essays.map((essay) => (
                     <Card key={essay.id} className="bg-muted/30">
                       <CardHeader>
-                        <CardTitle className="text-sm font-medium">
-                          {getUserEmail(essay.user_id)}
-                        </CardTitle>
-                        <CardDescription className="text-xs">
-                          {formatDate(essay.created_at)}
-                        </CardDescription>
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <CardTitle className="text-sm font-medium">
+                              {getUserEmail(essay.user_id)}
+                            </CardTitle>
+                            <CardDescription className="text-xs">
+                              {formatDate(essay.created_at)}
+                            </CardDescription>
+                          </div>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedEssay(essay);
+                                  setEditedEssayContent(essay.content);
+                                }}
+                              >
+                                <Eye className="h-4 w-4 mr-2" />
+                                상세보기/수정
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                              <DialogHeader>
+                                <DialogTitle>자기소개서 - {getUserEmail(essay.user_id)}</DialogTitle>
+                                <DialogDescription>
+                                  작성일: {formatDate(essay.created_at)}
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div>
+                                  <Label htmlFor="essay-content">내용</Label>
+                                  <Textarea
+                                    id="essay-content"
+                                    value={editedEssayContent}
+                                    onChange={(e) => setEditedEssayContent(e.target.value)}
+                                    className="min-h-[400px] mt-2"
+                                  />
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                  <Button variant="outline" onClick={() => setSelectedEssay(null)}>
+                                    취소
+                                  </Button>
+                                  <Button onClick={handleUpdateEssay}>
+                                    저장
+                                  </Button>
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
                       </CardHeader>
                       <CardContent>
                         <p className="text-sm whitespace-pre-wrap">
@@ -338,8 +533,16 @@ const AdminDashboard = () => {
           <TabsContent value="messages">
             <Card>
               <CardHeader>
-                <CardTitle>메시지 기록</CardTitle>
-                <CardDescription>사용자와 관리자 간의 메시지</CardDescription>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>메시지 기록</CardTitle>
+                    <CardDescription>사용자와 관리자 간의 메시지</CardDescription>
+                  </div>
+                  <Button onClick={() => exportToCSV(messages, "messages")} variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    CSV 내보내기
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -347,12 +550,69 @@ const AdminDashboard = () => {
                     <Card key={message.id} className="bg-muted/30">
                       <CardHeader className="pb-3">
                         <div className="flex justify-between items-start">
-                          <CardTitle className="text-sm font-medium">
-                            {getUserEmail(message.user_id)}
-                          </CardTitle>
-                          <Badge variant={message.is_from_admin ? "default" : "secondary"}>
-                            {message.is_from_admin ? "관리자" : "사용자"}
-                          </Badge>
+                          <div>
+                            <CardTitle className="text-sm font-medium">
+                              {getUserEmail(message.user_id)}
+                            </CardTitle>
+                            <Badge variant={message.is_from_admin ? "default" : "secondary"}>
+                              {message.is_from_admin ? "관리자" : "사용자"}
+                            </Badge>
+                          </div>
+                          {!message.is_from_admin && (
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => setSelectedUserId(message.user_id)}
+                                >
+                                  <Send className="h-4 w-4 mr-2" />
+                                  답변하기
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>관리자 답변</DialogTitle>
+                                  <DialogDescription>
+                                    {getUserEmail(message.user_id)}에게 답변을 보냅니다
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <div>
+                                    <Label htmlFor="original-message">원본 메시지</Label>
+                                    <Textarea
+                                      id="original-message"
+                                      value={message.message}
+                                      disabled
+                                      className="mt-2"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="reply-message">답변</Label>
+                                    <Textarea
+                                      id="reply-message"
+                                      value={replyMessage}
+                                      onChange={(e) => setReplyMessage(e.target.value)}
+                                      placeholder="답변을 입력하세요..."
+                                      className="mt-2 min-h-[120px]"
+                                    />
+                                  </div>
+                                  <div className="flex justify-end gap-2">
+                                    <Button variant="outline" onClick={() => {
+                                      setSelectedUserId(null);
+                                      setReplyMessage("");
+                                    }}>
+                                      취소
+                                    </Button>
+                                    <Button onClick={handleSendReply}>
+                                      <Send className="h-4 w-4 mr-2" />
+                                      전송
+                                    </Button>
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          )}
                         </div>
                         <CardDescription className="text-xs">
                           {formatDate(message.created_at)}
