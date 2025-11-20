@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_approval_requests: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          device_info: string | null
+          email: string
+          expires_at: string | null
+          id: string
+          ip_address: string | null
+          requested_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          device_info?: string | null
+          email: string
+          expires_at?: string | null
+          id?: string
+          ip_address?: string | null
+          requested_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          device_info?: string | null
+          email?: string
+          expires_at?: string | null
+          id?: string
+          ip_address?: string | null
+          requested_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       admin_messages: {
         Row: {
           created_at: string | null
