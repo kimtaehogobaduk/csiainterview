@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { ArrowLeft, Send, Paperclip, Trash2, Image as ImageIcon, Video, FileText, Pin, PinOff } from "lucide-react";
+import { ArrowLeft, Send, Paperclip, Trash2, Image as ImageIcon, Video, FileText, Pin, PinOff, Eye } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import Footer from "@/components/Footer";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -22,6 +22,7 @@ interface Post {
   user_id: string;
   title: string;
   content: string;
+  original_content?: string | null;
   attachments: any;
   is_deleted: boolean;
   is_pinned: boolean;
@@ -176,6 +177,7 @@ const Community = () => {
           user_id: user.id,
           title,
           content,
+          original_content: content, // Store original content for admin review
           attachments
         });
 
@@ -423,6 +425,27 @@ const Community = () => {
                   className="mb-4 break-words ql-editor-display"
                   dangerouslySetInnerHTML={{ __html: post.content }}
                 />
+                {isAdmin && post.original_content && post.original_content !== post.content && (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="mb-4">
+                        <Eye className="h-4 w-4 mr-2" />
+                        원본 내용 보기
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl max-h-[80vh]">
+                      <DialogHeader>
+                        <DialogTitle>검열 전 원본 내용</DialogTitle>
+                      </DialogHeader>
+                      <ScrollArea className="max-h-[60vh]">
+                        <div 
+                          className="p-4 break-words ql-editor-display"
+                          dangerouslySetInnerHTML={{ __html: post.original_content }}
+                        />
+                      </ScrollArea>
+                    </DialogContent>
+                  </Dialog>
+                )}
                 {post.attachments && post.attachments.length > 0 && (
                   <div className="space-y-2">
                     {post.attachments.map((attachment, idx) => (
