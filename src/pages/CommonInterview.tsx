@@ -9,7 +9,6 @@ import { ArrowLeft, Mic, MicOff, RefreshCw, Send } from "lucide-react";
 import { getRandomQuestion } from "@/constants/questions";
 import Footer from "@/components/Footer";
 import FormattedFeedback from "@/components/FormattedFeedback";
-import ModelSelector from "@/components/ModelSelector";
 
 interface FollowUpItem {
   question: string;
@@ -114,6 +113,7 @@ const CommonInterview = () => {
 
   useEffect(() => {
     setQuestion(getRandomQuestion());
+    loadUserModel();
 
     // Initialize speech recognition
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -140,6 +140,21 @@ const CommonInterview = () => {
       setRecognition(recognitionInstance);
     }
   }, []);
+
+  const loadUserModel = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('ai_model')
+        .eq('id', user.id)
+        .single();
+      
+      if (data && !error) {
+        setSelectedModel(data.ai_model || 'google/gemini-2.5-flash');
+      }
+    }
+  };
 
   const handleNewQuestion = () => {
     setQuestion(getRandomQuestion());
@@ -262,17 +277,6 @@ const CommonInterview = () => {
         </Button>
 
         <div className="space-y-6">
-          <Card className="shadow-soft">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                면접 설정
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ModelSelector value={selectedModel} onChange={setSelectedModel} />
-            </CardContent>
-          </Card>
-
           <Card className="shadow-soft">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-2xl">공통 면접 질문</CardTitle>

@@ -184,6 +184,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ai_model: string | null
           created_at: string | null
           email: string
           full_name: string | null
@@ -191,6 +192,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          ai_model?: string | null
           created_at?: string | null
           email: string
           full_name?: string | null
@@ -198,6 +200,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          ai_model?: string | null
           created_at?: string | null
           email?: string
           full_name?: string | null

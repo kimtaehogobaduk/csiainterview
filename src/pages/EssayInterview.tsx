@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import { ArrowLeft, Mic, MicOff, Send, FileText, CheckCircle, RefreshCw } from "lucide-react";
 import Footer from "@/components/Footer";
 import FormattedFeedback from "@/components/FormattedFeedback";
-import ModelSelector from "@/components/ModelSelector";
 
 interface FollowUpItem {
   question: string;
@@ -117,6 +116,7 @@ const EssayInterview = () => {
   const [selectedModel, setSelectedModel] = useState("google/gemini-2.5-flash");
 
   useEffect(() => {
+    loadUserModel();
     loadSavedEssay();
 
     // Initialize speech recognition
@@ -144,6 +144,21 @@ const EssayInterview = () => {
       setRecognition(recognitionInstance);
     }
   }, []);
+
+  const loadUserModel = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('ai_model')
+        .eq('id', user.id)
+        .single();
+      
+      if (data && !error) {
+        setSelectedModel(data.ai_model || 'google/gemini-2.5-flash');
+      }
+    }
+  };
 
   const loadSavedEssay = async () => {
     try {

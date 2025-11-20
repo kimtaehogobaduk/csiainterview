@@ -11,10 +11,12 @@ import { toast } from "sonner";
 import { ArrowLeft, User, FileText, MessageSquare, Save, Trash2 } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import Footer from "@/components/Footer";
+import ModelSelector from "@/components/ModelSelector";
 
 interface Profile {
   full_name: string;
   email: string;
+  ai_model: string;
 }
 
 interface Essay {
@@ -35,7 +37,11 @@ interface Session {
 const Profile = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [profile, setProfile] = useState<Profile>({ full_name: "", email: "" });
+  const [profile, setProfile] = useState<Profile>({ 
+    full_name: "", 
+    email: "",
+    ai_model: "google/gemini-2.5-flash"
+  });
   const [essays, setEssays] = useState<Essay[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(false);
@@ -59,7 +65,7 @@ const Profile = () => {
   const loadProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from("profiles")
-      .select("full_name, email")
+      .select("full_name, email, ai_model")
       .eq("id", userId)
       .single();
 
@@ -68,7 +74,11 @@ const Profile = () => {
       return;
     }
 
-    setProfile(data);
+    setProfile({
+      full_name: data.full_name || "",
+      email: data.email || "",
+      ai_model: data.ai_model || "google/gemini-2.5-flash"
+    });
   };
 
   const loadEssays = async () => {
@@ -109,7 +119,10 @@ const Profile = () => {
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ full_name: profile.full_name })
+        .update({ 
+          full_name: profile.full_name,
+          ai_model: profile.ai_model
+        })
         .eq("id", user.id);
 
       if (error) throw error;
@@ -198,6 +211,10 @@ const Profile = () => {
                     <Label>이메일</Label>
                     <Input value={profile.email} disabled />
                   </div>
+                  <ModelSelector 
+                    value={profile.ai_model} 
+                    onChange={(value) => setProfile({ ...profile, ai_model: value })}
+                  />
                   <Button onClick={handleUpdateProfile} disabled={loading} className="w-full">
                     <Save className="h-4 w-4 mr-2" />
                     {loading ? "저장 중..." : "저장하기"}
