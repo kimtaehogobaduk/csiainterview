@@ -282,6 +282,24 @@ const Index = () => {
                 <User className="h-5 w-5 mr-2" />
                 내 정보
               </Button>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => navigate("/shop")} 
+                className="hover:bg-primary/10 transition-all"
+                title="상점"
+              >
+                <ShoppingBag className="h-5 w-5" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => navigate("/leaderboard")} 
+                className="hover:bg-primary/10 transition-all"
+                title="리더보드"
+              >
+                <Trophy className="h-5 w-5" />
+              </Button>
               {isAdmin && (
                 <Button 
                   variant="ghost" 
@@ -322,7 +340,7 @@ const Index = () => {
           </div>
 
           {/* Main Cards */}
-          <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-6 mb-12">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           <Card 
             className="group hover:-translate-y-4 cursor-pointer transition-all duration-500 hover:shadow-intense border-2 hover:border-primary/30 animate-fade-in-up"
             onClick={() => navigate("/common-interview")}
@@ -393,56 +411,6 @@ const Index = () => {
               </p>
               <Button className="w-full bg-gradient-secondary hover:opacity-90 transition-all group-hover:shadow-soft">
                 참여하기
-                <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card 
-            className="group hover:-translate-y-4 cursor-pointer transition-all duration-500 hover:shadow-intense border-2 hover:border-yellow-500/30 animate-fade-in-up"
-            onClick={() => navigate("/leaderboard")}
-            style={{ animationDelay: '0.4s' }}
-          >
-            <CardHeader className="space-y-4">
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-yellow-400 to-yellow-600 w-fit shadow-soft group-hover:shadow-strong group-hover:scale-110 transition-all duration-500">
-                <Trophy className="h-10 w-10 text-white" />
-              </div>
-              <CardTitle className="text-2xl font-bold">리더보드</CardTitle>
-              <CardDescription className="text-base">
-                월간 마일리지 순위
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground leading-relaxed">
-                이번 달 최고의 학습자들을 확인해보세요
-              </p>
-              <Button className="w-full bg-gradient-to-r from-yellow-400 to-yellow-600 hover:opacity-90 transition-all group-hover:shadow-soft">
-                순위 보기
-                <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card 
-            className="group hover:-translate-y-4 cursor-pointer transition-all duration-500 hover:shadow-intense border-2 hover:border-purple-500/30 animate-fade-in-up"
-            onClick={() => navigate("/shop")}
-            style={{ animationDelay: '0.5s' }}
-          >
-            <CardHeader className="space-y-4">
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-500 to-purple-700 w-fit shadow-soft group-hover:shadow-strong group-hover:scale-110 transition-all duration-500">
-                <ShoppingBag className="h-10 w-10 text-white" />
-              </div>
-              <CardTitle className="text-2xl font-bold">상점</CardTitle>
-              <CardDescription className="text-base">
-                프로필 꾸미기 아이템
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground leading-relaxed">
-                마일리지로 프로필을 멋지게 꾸며보세요
-              </p>
-              <Button className="w-full bg-gradient-to-r from-purple-500 to-purple-700 hover:opacity-90 transition-all group-hover:shadow-soft">
-                둘러보기
                 <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Button>
             </CardContent>
