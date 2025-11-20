@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { GraduationCap } from "lucide-react";
@@ -15,6 +16,7 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [dataConsent, setDataConsent] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -49,6 +51,12 @@ const Auth = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!dataConsent) {
+      toast.error("서비스 이용을 위해 데이터 활용 동의가 필요합니다.");
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -153,7 +161,21 @@ const Auth = () => {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <div className="flex items-start space-x-2 border rounded-md p-3 bg-muted/30">
+                  <Checkbox 
+                    id="data-consent" 
+                    checked={dataConsent}
+                    onCheckedChange={(checked) => setDataConsent(checked as boolean)}
+                    required
+                  />
+                  <Label 
+                    htmlFor="data-consent" 
+                    className="text-sm leading-relaxed cursor-pointer"
+                  >
+                    더 나은 서비스 품질을 위해 익명화된 이용 데이터를 분석·연구 목적으로 활용할 수 있습니다.
+                  </Label>
+                </div>
+                <Button type="submit" className="w-full" disabled={loading || !dataConsent}>
                   {loading ? "처리 중..." : "회원가입"}
                 </Button>
               </form>
