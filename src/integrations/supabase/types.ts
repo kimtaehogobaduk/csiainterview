@@ -86,6 +86,9 @@ export type Database = {
           deleted_by: string | null
           id: string
           is_deleted: boolean | null
+          is_pinned: boolean | null
+          pinned_at: string | null
+          pinned_by: string | null
           title: string
           updated_at: string
           user_id: string
@@ -98,6 +101,9 @@ export type Database = {
           deleted_by?: string | null
           id?: string
           is_deleted?: boolean | null
+          is_pinned?: boolean | null
+          pinned_at?: string | null
+          pinned_by?: string | null
           title: string
           updated_at?: string
           user_id: string
@@ -110,6 +116,9 @@ export type Database = {
           deleted_by?: string | null
           id?: string
           is_deleted?: boolean | null
+          is_pinned?: boolean | null
+          pinned_at?: string | null
+          pinned_by?: string | null
           title?: string
           updated_at?: string
           user_id?: string

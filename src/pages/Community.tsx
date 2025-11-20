@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { ArrowLeft, Send, Paperclip, Trash2, Image as ImageIcon, Video, FileText } from "lucide-react";
+import { ArrowLeft, Send, Paperclip, Trash2, Image as ImageIcon, Video, FileText, Pin, PinOff } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import Footer from "@/components/Footer";
 
@@ -20,6 +20,8 @@ interface Post {
   content: string;
   attachments: any;
   is_deleted: boolean;
+  is_pinned: boolean;
+  pinned_at: string | null;
   created_at: string;
   profiles?: { full_name: string | null };
 }
@@ -28,6 +30,7 @@ const Community = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isElder, setIsElder] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -60,20 +63,23 @@ const Community = () => {
 
     setUser(session.user);
 
-    const { data } = await supabase
+    const { data: roles } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", session.user.id)
-      .eq("role", "admin")
-      .maybeSingle();
+      .in("role", ["admin", "elder"]);
 
-    setIsAdmin(!!data);
+    if (roles) {
+      setIsAdmin(roles.some(r => r.role === "admin"));
+      setIsElder(roles.some(r => r.role === "elder"));
+    }
   };
 
   const loadPosts = async () => {
     const { data } = await supabase
       .from("community_posts")
       .select("*")
+      .order("is_pinned", { ascending: false })
       .order("created_at", { ascending: false });
 
     if (data) {
@@ -200,6 +206,55 @@ const Community = () => {
     }
   };
 
+  const handlePinToggle = async (postId: string, currentPinStatus: boolean) => {
+    try {
+      if (currentPinStatus) {
+        // Unpin the post
+        const { error } = await supabase
+          .from("community_posts")
+          .update({ is_pinned: false, pinned_at: null, pinned_by: null })
+          .eq("id", postId);
+
+        if (error) throw error;
+        toast.success("공지사항이 해제되었습니다.");
+      } else {
+        // Check current pinned posts count
+        const { data: pinnedPosts } = await supabase
+          .from("community_posts")
+          .select("id, pinned_at")
+          .eq("is_pinned", true)
+          .order("pinned_at", { ascending: true });
+
+        // If there are 3 or more pinned posts, unpin the oldest one
+        if (pinnedPosts && pinnedPosts.length >= 3) {
+          const oldestPinned = pinnedPosts[0];
+          await supabase
+            .from("community_posts")
+            .update({ is_pinned: false, pinned_at: null, pinned_by: null })
+            .eq("id", oldestPinned.id);
+        }
+
+        // Pin the new post
+        const { error } = await supabase
+          .from("community_posts")
+          .update({ 
+            is_pinned: true, 
+            pinned_at: new Date().toISOString(), 
+            pinned_by: user?.id 
+          })
+          .eq("id", postId);
+
+        if (error) throw error;
+        toast.success("공지사항으로 등록되었습니다.");
+      }
+
+      loadPosts();
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error("작업에 실패했습니다.");
+    }
+  };
+
   const renderAttachment = (attachment: { type: string; url: string; name: string }) => {
     switch (attachment.type) {
       case 'image':
@@ -282,22 +337,46 @@ const Community = () => {
             <Card key={post.id}>
               <CardHeader>
                 <div className="flex justify-between items-start">
-                  <div className="space-y-1">
-                    <CardTitle>{post.title}</CardTitle>
+                  <div className="space-y-1 flex-1">
+                    <div className="flex items-center gap-2">
+                      <CardTitle>{post.title}</CardTitle>
+                      {post.is_pinned && (
+                        <Badge variant="default" className="gap-1">
+                          <Pin className="h-3 w-3" />
+                          공지
+                        </Badge>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <span>{post.profiles?.full_name || "익명"}</span>
                       <span>•</span>
                       <span>{new Date(post.created_at).toLocaleDateString('ko-KR')}</span>
                     </div>
                   </div>
-                  {isAdmin && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(post.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                  {(isAdmin || isElder) && (
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handlePinToggle(post.id, post.is_pinned)}
+                        title={post.is_pinned ? "공지사항 해제" : "공지사항으로 등록"}
+                      >
+                        {post.is_pinned ? (
+                          <PinOff className="h-4 w-4" />
+                        ) : (
+                          <Pin className="h-4 w-4" />
+                        )}
+                      </Button>
+                      {isAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(post.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </div>
               </CardHeader>
