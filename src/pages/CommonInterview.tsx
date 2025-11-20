@@ -372,7 +372,7 @@ const CommonInterview = () => {
 
         // Award mileage based on score
         if (!saveError && extractedScore && sessionData) {
-          const mileageAmount = Math.floor(extractedScore / 2); // 점수의 50%를 마일리지로 지급
+          const mileageAmount = extractedScore + 30; // 점수 + 30을 마일리지로 지급
           await supabase.rpc('award_mileage', {
             p_user_id: user.id,
             p_amount: mileageAmount,
