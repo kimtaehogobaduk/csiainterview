@@ -16,6 +16,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import FeedbackDialog from "@/components/FeedbackDialog";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import { z } from "zod";
 
 interface Post {
   id: string;
@@ -30,6 +31,11 @@ interface Post {
   created_at: string;
   profiles?: { full_name: string | null };
 }
+
+const postSchema = z.object({
+  title: z.string().trim().min(1, "제목을 입력해주세요.").max(200, "제목은 200자 이내로 작성해주세요."),
+  content: z.string().trim().min(1, "내용을 입력해주세요.").max(10000, "내용은 10,000자 이내로 작성해주세요.")
+});
 
 const Community = () => {
   const navigate = useNavigate();
@@ -131,27 +137,31 @@ const Community = () => {
         .upload(fileName, file);
 
       if (uploadError) {
-        console.error('Upload error:', uploadError);
         continue;
       }
 
-      const { data: { publicUrl } } = supabase.storage
+      // Use signed URL instead of public URL
+      const { data: signedUrlData } = await supabase.storage
         .from('community-files')
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 31536000); // 1 year expiration
+
+      if (!signedUrlData?.signedUrl) continue;
 
       let fileType = 'file';
       if (file.type.startsWith('image/')) fileType = 'image';
       else if (file.type.startsWith('video/')) fileType = 'video';
 
-      uploadedFiles.push({ type: fileType, url: publicUrl, name: file.name });
+      uploadedFiles.push({ type: fileType, url: signedUrlData.signedUrl, name: file.name });
     }
 
     return uploadedFiles;
   };
 
   const handleSubmit = async () => {
-    if (!title.trim() || !content.trim()) {
-      toast.error("제목과 내용을 입력해주세요.");
+    // Validate input with zod
+    const validation = postSchema.safeParse({ title, content });
+    if (!validation.success) {
+      toast.error(validation.error.issues[0].message);
       return;
     }
 
@@ -190,7 +200,6 @@ const Community = () => {
       setShowDialog(false);
       loadPosts();
     } catch (error: any) {
-      console.error('Error:', error);
       toast.error("게시글 작성에 실패했습니다.");
     } finally {
       setLoading(false);
@@ -209,7 +218,6 @@ const Community = () => {
       toast.success("게시글이 삭제되었습니다.");
       loadPosts();
     } catch (error) {
-      console.error('Error:', error);
       toast.error("삭제에 실패했습니다.");
     }
   };
@@ -258,7 +266,6 @@ const Community = () => {
 
       loadPosts();
     } catch (error) {
-      console.error('Error:', error);
       toast.error("작업에 실패했습니다.");
     }
   };

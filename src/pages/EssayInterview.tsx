@@ -136,7 +136,6 @@ const EssayInterview = () => {
       };
 
       recognitionInstance.onerror = (event: any) => {
-        console.error('Speech recognition error', event.error);
         toast.error('음성 인식 오류가 발생했습니다.');
         setIsRecording(false);
       };
@@ -178,7 +177,7 @@ const EssayInterview = () => {
         setEssay(data.content);
       }
     } catch (error) {
-      console.error('Load essay error:', error);
+      // Error handled silently
     }
   };
 
@@ -225,7 +224,6 @@ const EssayInterview = () => {
       setSavedEssay(essay);
       toast.success('자기소개서가 저장되었습니다.');
     } catch (error: any) {
-      console.error('Error:', error);
       toast.error('저장에 실패했습니다.');
     } finally {
       setLoading(false);
@@ -256,7 +254,6 @@ const EssayInterview = () => {
       setTab("interview");
       toast.success('질문이 생성되었습니다!');
     } catch (error: any) {
-      console.error('Error:', error);
       toast.error('질문 생성에 실패했습니다.');
     } finally {
       setLoading(false);
@@ -373,14 +370,10 @@ const EssayInterview = () => {
             score: extractedScore
           });
 
-        if (saveError) {
-          console.error('Save error:', saveError);
-        }
       }
 
       toast.success('피드백을 받았습니다!');
     } catch (error: any) {
-      console.error('Error:', error);
       toast.error('피드백을 가져오는데 실패했습니다.');
     } finally {
       setLoading(false);
@@ -498,7 +491,6 @@ const EssayInterview = () => {
 
       toast.success('피드백을 받았습니다!');
     } catch (error: any) {
-      console.error('Error:', error);
       toast.error('피드백을 가져오는데 실패했습니다.');
     } finally {
       setLoading(false);
