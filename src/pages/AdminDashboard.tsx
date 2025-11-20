@@ -332,20 +332,33 @@ const AdminDashboard = () => {
     }
 
     try {
-      await supabase.rpc('award_mileage', {
+      console.log('Calling award_mileage with:', {
         p_user_id: selectedUserForMileage.id,
         p_amount: amount,
         p_reason: mileageReason
       });
 
+      const { data, error } = await supabase.rpc('award_mileage', {
+        p_user_id: selectedUserForMileage.id,
+        p_amount: amount,
+        p_reason: mileageReason,
+        p_session_id: null
+      });
+
+      if (error) {
+        console.error("RPC error:", error);
+        throw error;
+      }
+
+      console.log('Mileage awarded successfully:', data);
       toast.success(`마일리지가 ${amount > 0 ? '지급' : '차감'}되었습니다.`);
       setSelectedUserForMileage(null);
       setMileageAmount("");
       setMileageReason("");
       loadAllData();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Mileage management error:", error);
-      toast.error("마일리지 관리 중 오류가 발생했습니다.");
+      toast.error(`마일리지 관리 중 오류가 발생했습니다: ${error.message || JSON.stringify(error)}`);
     }
   };
 
