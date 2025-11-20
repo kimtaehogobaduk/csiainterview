@@ -153,7 +153,7 @@ const Index = () => {
           <p className="text-muted-foreground">원하는 면접 연습 방식을 선택하세요</p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           <Card 
             className="shadow-soft hover:shadow-strong transition-all cursor-pointer group"
             onClick={() => navigate("/common-interview")}
@@ -189,6 +189,25 @@ const Index = () => {
                 자소서를 입력하면 AI가 맞춤 질문을 생성합니다
               </p>
               <Button className="w-full">시작하기</Button>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="shadow-soft hover:shadow-strong transition-all cursor-pointer group"
+            onClick={() => navigate("/community")}
+          >
+            <CardHeader>
+              <MessageSquare className="h-12 w-12 text-primary mb-4 group-hover:scale-110 transition-transform" />
+              <CardTitle>커뮤니티</CardTitle>
+              <CardDescription>
+                입시 정보 공유 및 소통
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                청심국제고등학교 입시에 대해 자유롭게 이야기 나누세요
+              </p>
+              <Button className="w-full">참여하기</Button>
             </CardContent>
           </Card>
         </div>

@@ -51,6 +51,39 @@ const EssayInterview = () => {
     }
   }, []);
 
+  // Auto-save essay every 30 seconds
+  useEffect(() => {
+    if (!essay.trim() || essay === savedEssay) return;
+
+    const autoSaveTimer = setTimeout(async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { error: saveError } = await supabase
+          .from('essays')
+          .insert({
+            user_id: user.id,
+            content: essay
+          });
+
+        if (saveError) {
+          await supabase
+            .from('essays')
+            .update({ content: essay, updated_at: new Date().toISOString() })
+            .eq('user_id', user.id);
+        }
+
+        setSavedEssay(essay);
+        toast.success('자동 저장되었습니다.', { duration: 2000 });
+      } catch (error) {
+        console.error('Auto-save error:', error);
+      }
+    }, 30000); // 30 seconds
+
+    return () => clearTimeout(autoSaveTimer);
+  }, [essay, savedEssay]);
+
   const loadSavedEssay = async () => {
     const { data } = await supabase
       .from('essays')

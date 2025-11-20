@@ -20,6 +20,7 @@ interface Profile {
   email: string;
   full_name: string | null;
   created_at: string | null;
+  role?: string;
 }
 
 interface InterviewSession {
@@ -63,6 +64,9 @@ const AdminDashboard = () => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedEssay, setSelectedEssay] = useState<Essay | null>(null);
   const [editedEssayContent, setEditedEssayContent] = useState("");
+  const [selectedSession, setSelectedSession] = useState<InterviewSession | null>(null);
+  const [selectedUserForRole, setSelectedUserForRole] = useState<Profile | null>(null);
+  const [newRole, setNewRole] = useState<string>("");
 
   useEffect(() => {
     checkAuth();
@@ -98,13 +102,26 @@ const AdminDashboard = () => {
   };
 
   const loadAllData = async () => {
-    // Load all profiles
+    // Load all profiles with roles
     const { data: profilesData } = await supabase
       .from("profiles")
       .select("*")
       .order("created_at", { ascending: false });
     
-    if (profilesData) setProfiles(profilesData);
+    if (profilesData) {
+      const profilesWithRoles = await Promise.all(
+        profilesData.map(async (profile) => {
+          const { data: roleData } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", profile.id)
+            .maybeSingle();
+          
+          return { ...profile, role: roleData?.role || "user" };
+        })
+      );
+      setProfiles(profilesWithRoles);
+    }
 
     // Load all interview sessions
     const { data: sessionsData } = await supabase
@@ -233,6 +250,44 @@ const AdminDashboard = () => {
     toast.success("데이터를 내보냈습니다.");
   };
 
+  const handleChangeRole = async () => {
+    if (!selectedUserForRole || !newRole) {
+      toast.error("역할을 선택해주세요.");
+      return;
+    }
+
+    try {
+      const { data: existingRole } = await supabase
+        .from("user_roles")
+        .select("*")
+        .eq("user_id", selectedUserForRole.id)
+        .maybeSingle();
+
+      if (existingRole) {
+        const { error } = await supabase
+          .from("user_roles")
+          .update({ role: newRole as any })
+          .eq("user_id", selectedUserForRole.id);
+        
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("user_roles")
+          .insert({ user_id: selectedUserForRole.id, role: newRole as any });
+        
+        if (error) throw error;
+      }
+
+      toast.success("역할이 변경되었습니다.");
+      setSelectedUserForRole(null);
+      setNewRole("");
+      loadAllData();
+    } catch (error) {
+      console.error("Role change error:", error);
+      toast.error("역할 변경 중 오류가 발생했습니다.");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -341,6 +396,7 @@ const AdminDashboard = () => {
                     <TableRow>
                       <TableHead>이메일</TableHead>
                       <TableHead>이름</TableHead>
+                      <TableHead>역할</TableHead>
                       <TableHead>가입일</TableHead>
                       <TableHead className="text-right">작업</TableHead>
                     </TableRow>
@@ -350,30 +406,74 @@ const AdminDashboard = () => {
                       <TableRow key={profile.id}>
                         <TableCell className="font-medium">{profile.email}</TableCell>
                         <TableCell>{profile.full_name || "N/A"}</TableCell>
+                        <TableCell>
+                          <Badge variant={profile.role === "admin" ? "destructive" : profile.role === "elder" ? "secondary" : "outline"}>
+                            {profile.role === "admin" ? "관리자" : profile.role === "elder" ? "장로" : "사용자"}
+                          </Badge>
+                        </TableCell>
                         <TableCell>{formatDate(profile.created_at)}</TableCell>
                         <TableCell className="text-right">
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="destructive" size="sm">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>사용자 삭제</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  {profile.email} 사용자와 관련된 모든 데이터(세션, 에세이, 메시지)가 삭제됩니다. 
-                                  이 작업은 되돌릴 수 없습니다.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>취소</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDeleteUser(profile.id)}>
-                                  삭제
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                          <div className="flex gap-2 justify-end">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedUserForRole(profile);
+                                    setNewRole(profile.role || "user");
+                                  }}
+                                >
+                                  역할 변경
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>사용자 역할 변경</DialogTitle>
+                                  <DialogDescription>
+                                    {profile.email}의 역할을 변경합니다.
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <Label>역할 선택</Label>
+                                  <select
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                    value={newRole}
+                                    onChange={(e) => setNewRole(e.target.value)}
+                                  >
+                                    <option value="user">사용자</option>
+                                    <option value="elder">장로</option>
+                                    <option value="admin">관리자</option>
+                                  </select>
+                                  <Button onClick={handleChangeRole} className="w-full">
+                                    변경하기
+                                  </Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="sm">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>사용자 삭제</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    {profile.email} 사용자와 관련된 모든 데이터(세션, 에세이, 메시지)가 삭제됩니다. 
+                                    이 작업은 되돌릴 수 없습니다.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>취소</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeleteUser(profile.id)}>
+                                    삭제
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -418,23 +518,57 @@ const AdminDashboard = () => {
                             {session.score && (
                               <Badge variant="outline">{session.score}점</Badge>
                             )}
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" size="sm" onClick={() => setSelectedSession(session)}>
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                                <DialogHeader>
+                                  <DialogTitle>면접 세션 상세</DialogTitle>
+                                  <DialogDescription>
+                                    {getUserEmail(session.user_id)} - {formatDate(session.created_at)}
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <div>
+                                    <Label className="text-sm font-semibold">질문</Label>
+                                    <p className="mt-2 text-sm">{session.question}</p>
+                                  </div>
+                                  {session.answer && (
+                                    <div>
+                                      <Label className="text-sm font-semibold">답변</Label>
+                                      <p className="mt-2 text-sm whitespace-pre-wrap">{session.answer}</p>
+                                    </div>
+                                  )}
+                                  {session.ai_feedback && (
+                                    <div>
+                                      <Label className="text-sm font-semibold">AI 피드백</Label>
+                                      <p className="mt-2 text-sm whitespace-pre-wrap">{session.ai_feedback}</p>
+                                    </div>
+                                  )}
+                                  {session.score && (
+                                    <div>
+                                      <Label className="text-sm font-semibold">점수</Label>
+                                      <p className="mt-2 text-sm">{session.score}점 / 100점</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </DialogContent>
+                            </Dialog>
                           </div>
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-2 text-sm">
                         <div>
-                          <strong>질문:</strong> {session.question}
+                          <strong>질문:</strong> {session.question.substring(0, 100)}
+                          {session.question.length > 100 ? "..." : ""}
                         </div>
                         {session.answer && (
                           <div>
-                            <strong>답변:</strong> {session.answer.substring(0, 200)}
-                            {session.answer.length > 200 ? "..." : ""}
-                          </div>
-                        )}
-                        {session.ai_feedback && (
-                          <div>
-                            <strong>AI 피드백:</strong> {session.ai_feedback.substring(0, 200)}
-                            {session.ai_feedback.length > 200 ? "..." : ""}
+                            <strong>답변:</strong> {session.answer.substring(0, 150)}
+                            {session.answer.length > 150 ? "..." : ""}
                           </div>
                         )}
                       </CardContent>
