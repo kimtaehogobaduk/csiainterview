@@ -31,12 +31,13 @@ const Index = () => {
 
   const checkAdmin = async (userId: string) => {
     const { data } = await supabase
-      .from("profiles")
-      .select("is_admin")
-      .eq("id", userId)
-      .single();
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
     
-    setIsAdmin(data?.is_admin || false);
+    setIsAdmin(!!data);
   };
 
   const handleLogout = async () => {
