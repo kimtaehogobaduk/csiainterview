@@ -71,68 +71,97 @@ const Index = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/5">
-        <div className="container mx-auto px-4 py-16">
-          <div className="text-center mb-16">
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.1),transparent_50%),radial-gradient(circle_at_bottom_left,hsl(var(--accent)/0.1),transparent_50%)]" />
+        <div className="container mx-auto px-4 py-16 relative">
+          <div className="text-center mb-16 animate-fade-in">
             <div className="flex justify-center mb-6">
-              <div className="h-24 w-24 rounded-lg overflow-hidden shadow-strong">
+              <div className="h-28 w-28 rounded-2xl overflow-hidden shadow-intense ring-4 ring-primary/20 animate-glow">
                 <img src={logoImage} alt="합격의 길" className="w-full h-full object-cover" />
               </div>
             </div>
-            <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <h1 className="text-6xl font-bold mb-4 bg-gradient-hero bg-clip-text text-transparent animate-scale-in">
               합격의 길
             </h1>
-            <p className="text-xl text-muted-foreground mb-2">
+            <p className="text-2xl text-foreground/80 mb-2 font-medium">
               청심국제고등학교 입시 면접 준비 플랫폼
             </p>
-            <p className="text-muted-foreground">
+            <p className="text-lg text-muted-foreground">
               AI 기반 면접 연습으로 완벽한 합격을 준비하세요
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-12">
-            <Card className="shadow-soft hover:shadow-strong transition-shadow">
+            <Card className="group hover:-translate-y-2 transition-all duration-300 animate-fade-in">
               <CardHeader>
-                <MessageSquare className="h-12 w-12 text-primary mb-4" />
-                <CardTitle>공통 면접 질문</CardTitle>
-                <CardDescription>
+                <div className="p-3 rounded-xl bg-primary/10 w-fit mb-4 group-hover:bg-primary/20 transition-colors">
+                  <MessageSquare className="h-12 w-12 text-primary" />
+                </div>
+                <CardTitle className="text-2xl">공통 면접 질문</CardTitle>
+                <CardDescription className="text-base">
                   150개의 공통 면접 질문으로 실전 연습
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li>• 음성인식 답변 입력</li>
-                  <li>• AI 실시간 피드백</li>
-                  <li>• 추가 질문 자동 생성</li>
-                  <li>• 태도 및 발음 분석</li>
+                <ul className="space-y-3 text-sm text-muted-foreground">
+                  <li className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                    음성인식 답변 입력
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                    AI 실시간 피드백
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                    추가 질문 자동 생성
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                    태도 및 발음 분석
+                  </li>
                 </ul>
               </CardContent>
             </Card>
 
-            <Card className="shadow-soft hover:shadow-strong transition-shadow">
+            <Card className="group hover:-translate-y-2 transition-all duration-300 animate-fade-in" style={{ animationDelay: '0.1s' }}>
               <CardHeader>
-                <FileText className="h-12 w-12 text-primary mb-4" />
-                <CardTitle>자소서 기반 면접</CardTitle>
-                <CardDescription>
+                <div className="p-3 rounded-xl bg-accent/10 w-fit mb-4 group-hover:bg-accent/20 transition-colors">
+                  <FileText className="h-12 w-12 text-accent" />
+                </div>
+                <CardTitle className="text-2xl">자소서 기반 면접</CardTitle>
+                <CardDescription className="text-base">
                   자기소개서를 분석하여 맞춤 질문 생성
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li>• 자소서 맞춤법 검사</li>
-                  <li>• AI 자동 질문 생성</li>
-                  <li>• 100점 만점 평가</li>
-                  <li>• 자소서 자동 저장</li>
+                <ul className="space-y-3 text-sm text-muted-foreground">
+                  <li className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                    자소서 맞춤법 검사
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                    AI 자동 질문 생성
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                    100점 만점 평가
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                    자소서 자동 저장
+                  </li>
                 </ul>
               </CardContent>
             </Card>
           </div>
 
-          <div className="text-center">
+          <div className="text-center animate-fade-in" style={{ animationDelay: '0.2s' }}>
             <Button 
               size="lg" 
               onClick={() => navigate("/auth")}
-              className="shadow-soft hover:shadow-strong transition-shadow text-lg px-8 py-6"
+              className="text-lg px-10 py-7 h-auto text-base font-semibold"
             >
               시작하기
             </Button>
@@ -144,27 +173,30 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/5">
-      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 relative overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.1),transparent_50%),radial-gradient(circle_at_bottom_left,hsl(var(--accent)/0.1),transparent_50%)]" />
+      <header className="border-b border-border/50 bg-card/80 backdrop-blur-md sticky top-0 z-10 shadow-sm">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <img src={logoImage} alt="합격의 길" className="h-10 w-10 rounded object-cover" />
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg overflow-hidden shadow-soft ring-2 ring-primary/20">
+              <img src={logoImage} alt="합격의 길" className="w-full h-full object-cover" />
+            </div>
+            <h1 className="text-2xl font-bold bg-gradient-hero bg-clip-text text-transparent">
               합격의 길
             </h1>
           </div>
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate("/profile")}>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" onClick={() => navigate("/profile")} className="hover:bg-primary/5">
               <User className="h-5 w-5 mr-2" />
               내 정보
             </Button>
             {isAdmin && (
-              <Button variant="ghost" onClick={() => navigate("/admin")}>
+              <Button variant="ghost" onClick={() => navigate("/admin")} className="hover:bg-accent/5">
                 <Shield className="h-5 w-5 mr-2" />
                 관리자
               </Button>
             )}
-            <Button variant="ghost" onClick={handleLogout}>
+            <Button variant="ghost" onClick={handleLogout} className="hover:bg-destructive/5">
               <LogOut className="h-5 w-5 mr-2" />
               로그아웃
             </Button>
@@ -172,20 +204,22 @@ const Index = () => {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-12">
-        <div className="mb-12 text-center">
-          <h2 className="text-3xl font-bold mb-2">환영합니다!</h2>
-          <p className="text-muted-foreground">원하는 면접 연습 방식을 선택하세요</p>
+      <div className="container mx-auto px-4 py-12 relative">
+        <div className="mb-12 text-center animate-fade-in">
+          <h2 className="text-4xl font-bold mb-3 bg-gradient-hero bg-clip-text text-transparent">환영합니다!</h2>
+          <p className="text-lg text-muted-foreground">원하는 면접 연습 방식을 선택하세요</p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           <Card 
-            className="shadow-soft hover:shadow-strong transition-all cursor-pointer group"
+            className="group hover:-translate-y-2 cursor-pointer animate-fade-in"
             onClick={() => navigate("/common-interview")}
           >
             <CardHeader>
-              <MessageSquare className="h-12 w-12 text-primary mb-4 group-hover:scale-110 transition-transform" />
-              <CardTitle>공통 면접 질문</CardTitle>
+              <div className="p-3 rounded-xl bg-primary/10 w-fit mb-4 group-hover:bg-primary/20 transition-colors">
+                <MessageSquare className="h-12 w-12 text-primary group-hover:scale-110 transition-transform" />
+              </div>
+              <CardTitle className="text-xl">공통 면접 질문</CardTitle>
               <CardDescription>
                 150개의 면접 질문으로 실전 대비
               </CardDescription>
@@ -199,12 +233,15 @@ const Index = () => {
           </Card>
 
           <Card 
-            className="shadow-soft hover:shadow-strong transition-all cursor-pointer group"
+            className="group hover:-translate-y-2 cursor-pointer animate-fade-in"
             onClick={() => navigate("/essay-interview")}
+            style={{ animationDelay: '0.1s' }}
           >
             <CardHeader>
-              <FileText className="h-12 w-12 text-primary mb-4 group-hover:scale-110 transition-transform" />
-              <CardTitle>자소서 기반 면접</CardTitle>
+              <div className="p-3 rounded-xl bg-accent/10 w-fit mb-4 group-hover:bg-accent/20 transition-colors">
+                <FileText className="h-12 w-12 text-accent group-hover:scale-110 transition-transform" />
+              </div>
+              <CardTitle className="text-xl">자소서 기반 면접</CardTitle>
               <CardDescription>
                 자기소개서 분석 맞춤 질문
               </CardDescription>
@@ -213,17 +250,20 @@ const Index = () => {
               <p className="text-sm text-muted-foreground mb-4">
                 자소서를 입력하면 AI가 맞춤 질문을 생성합니다
               </p>
-              <Button className="w-full">시작하기</Button>
+              <Button variant="accent" className="w-full">시작하기</Button>
             </CardContent>
           </Card>
 
           <Card 
-            className="shadow-soft hover:shadow-strong transition-all cursor-pointer group"
+            className="group hover:-translate-y-2 cursor-pointer animate-fade-in"
             onClick={() => navigate("/community")}
+            style={{ animationDelay: '0.2s' }}
           >
             <CardHeader>
-              <MessageSquare className="h-12 w-12 text-primary mb-4 group-hover:scale-110 transition-transform" />
-              <CardTitle>커뮤니티</CardTitle>
+              <div className="p-3 rounded-xl bg-secondary/10 w-fit mb-4 group-hover:bg-secondary/20 transition-colors">
+                <MessageSquare className="h-12 w-12 text-secondary group-hover:scale-110 transition-transform" />
+              </div>
+              <CardTitle className="text-xl">커뮤니티</CardTitle>
               <CardDescription>
                 입시 정보 공유 및 소통
               </CardDescription>
@@ -232,7 +272,7 @@ const Index = () => {
               <p className="text-sm text-muted-foreground mb-4">
                 청심국제고등학교 입시에 대해 자유롭게 이야기 나누세요
               </p>
-              <Button className="w-full">참여하기</Button>
+              <Button variant="secondary" className="w-full">참여하기</Button>
             </CardContent>
           </Card>
         </div>
