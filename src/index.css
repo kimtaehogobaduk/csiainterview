@@ -97,3 +97,114 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Rich text editor display styles */
+.ql-editor-display {
+  line-height: 1.6;
+}
+
+.ql-editor-display h1 {
+  font-size: 2em;
+  font-weight: bold;
+  margin: 0.67em 0;
+}
+
+.ql-editor-display h2 {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin: 0.75em 0;
+}
+
+.ql-editor-display h3 {
+  font-size: 1.17em;
+  font-weight: bold;
+  margin: 0.83em 0;
+}
+
+.ql-editor-display strong {
+  font-weight: bold;
+}
+
+.ql-editor-display em {
+  font-style: italic;
+}
+
+.ql-editor-display u {
+  text-decoration: underline;
+}
+
+.ql-editor-display s {
+  text-decoration: line-through;
+}
+
+.ql-editor-display ol {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.ql-editor-display ul {
+  list-style-type: disc;
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.ql-editor-display li {
+  margin: 0.25em 0;
+}
+
+.ql-editor-display a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+}
+
+.ql-editor-display .ql-size-small {
+  font-size: 0.75em;
+}
+
+.ql-editor-display .ql-size-large {
+  font-size: 1.5em;
+}
+
+.ql-editor-display .ql-size-huge {
+  font-size: 2.5em;
+}
+
+.ql-editor-display .ql-align-center {
+  text-align: center;
+}
+
+.ql-editor-display .ql-align-right {
+  text-align: right;
+}
+
+.ql-editor-display .ql-align-justify {
+  text-align: justify;
+}
+
+/* Quill editor custom styles */
+.quill {
+  background: hsl(var(--background));
+}
+
+.ql-toolbar {
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.ql-container {
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 0 0 0.5rem 0.5rem;
+}
+
+.ql-editor {
+  min-height: 200px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.ql-editor.ql-blank::before {
+  color: hsl(var(--muted-foreground));
+  font-style: normal;
+}
