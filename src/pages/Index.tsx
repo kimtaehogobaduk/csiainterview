@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { supabase } from "@/integrations/supabase/client";
 import { GraduationCap, MessageSquare, FileText, LogOut, User, Shield } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { AdminApprovalDialog } from "@/components/AdminApprovalDialog";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -37,7 +38,24 @@ const Index = () => {
       .eq("role", "admin")
       .maybeSingle();
     
-    setIsAdmin(!!data);
+    const hasAdminRole = !!data;
+    setIsAdmin(hasAdminRole);
+
+    // If user is admin and device is approved, set device token
+    if (hasAdminRole) {
+      const { data: approvedRequest } = await supabase
+        .from('admin_approval_requests')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', 'approved')
+        .order('approved_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (approvedRequest && !localStorage.getItem('admin_approved_device')) {
+        localStorage.setItem('admin_approved_device', approvedRequest.id);
+      }
+    }
   };
 
   const handleLogout = async () => {
@@ -120,6 +138,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/5">
+      <AdminApprovalDialog />
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
