@@ -12,17 +12,26 @@ const Index = () => {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const initAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user || null);
       if (session?.user) {
-        checkAdmin(session.user.id);
+        await checkAdmin(session.user.id);
       }
-    });
+    };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+    initAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, session?.user?.email);
       setUser(session?.user || null);
       if (session?.user) {
-        checkAdmin(session.user.id);
+        // Defer admin check to avoid blocking auth state change
+        setTimeout(() => {
+          checkAdmin(session.user.id);
+        }, 0);
+      } else {
+        setIsAdmin(false);
       }
     });
 
@@ -30,14 +39,27 @@ const Index = () => {
   }, []);
 
   const checkAdmin = async (userId: string) => {
-    const { data } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "admin")
-      .maybeSingle();
-    
-    setIsAdmin(!!data);
+    try {
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .eq("role", "admin")
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Admin check error:', error);
+        setIsAdmin(false);
+        return;
+      }
+      
+      const isAdminUser = !!data;
+      console.log('Admin check result:', { userId, isAdmin: isAdminUser, data });
+      setIsAdmin(isAdminUser);
+    } catch (error) {
+      console.error('Admin check exception:', error);
+      setIsAdmin(false);
+    }
   };
 
   const handleLogout = async () => {
