@@ -87,6 +87,7 @@ export type Database = {
           id: string
           is_deleted: boolean | null
           is_pinned: boolean | null
+          original_content: string | null
           pinned_at: string | null
           pinned_by: string | null
           title: string
@@ -102,6 +103,7 @@ export type Database = {
           id?: string
           is_deleted?: boolean | null
           is_pinned?: boolean | null
+          original_content?: string | null
           pinned_at?: string | null
           pinned_by?: string | null
           title: string
@@ -117,6 +119,7 @@ export type Database = {
           id?: string
           is_deleted?: boolean | null
           is_pinned?: boolean | null
+          original_content?: string | null
           pinned_at?: string | null
           pinned_by?: string | null
           title?: string
