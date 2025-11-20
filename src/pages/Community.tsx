@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Send, Paperclip, Trash2, Image as ImageIcon, Video, FileText, Pin, PinOff } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import Footer from "@/components/Footer";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Post {
   id: string;
@@ -28,6 +29,7 @@ interface Post {
 
 const Community = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isElder, setIsElder] = useState(false);
@@ -274,92 +276,109 @@ const Community = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/5">
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <Button variant="ghost" onClick={() => navigate("/")}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            돌아가기
-          </Button>
-          <h1 className="text-2xl font-bold">커뮤니티</h1>
-          <Dialog open={showDialog} onOpenChange={setShowDialog}>
-            <DialogTrigger asChild>
-              <Button>글쓰기</Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>새 게시글 작성</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <Input
-                  placeholder="제목"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-                <Textarea
-                  placeholder="내용을 입력하세요..."
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  className="min-h-[200px]"
-                />
-                <div>
-                  <label htmlFor="file-upload" className="cursor-pointer">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-                      <Paperclip className="h-4 w-4" />
-                      파일 첨부 (이미지, 동영상, 문서)
-                    </div>
-                  </label>
-                  <input
-                    id="file-upload"
-                    type="file"
-                    multiple
-                    onChange={handleFileChange}
-                    className="hidden"
-                    accept="image/*,video/*,.pdf,.doc,.docx"
-                  />
-                  {files.length > 0 && (
-                    <div className="mt-2 text-sm text-muted-foreground">
-                      {files.length}개 파일 선택됨
-                    </div>
-                  )}
-                </div>
-                <Button onClick={handleSubmit} disabled={loading} className="w-full">
-                  <Send className="h-4 w-4 mr-2" />
-                  작성하기
+        <div className="container mx-auto px-4 py-3 md:py-4">
+          <div className="flex justify-between items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size={isMobile ? "sm" : "default"}
+              onClick={() => navigate("/")}
+              className="min-h-[44px]"
+            >
+              <ArrowLeft className="h-4 w-4 mr-1 md:mr-2" />
+              {!isMobile && "돌아가기"}
+            </Button>
+            <h1 className="text-lg md:text-2xl font-bold">커뮤니티</h1>
+            <Dialog open={showDialog} onOpenChange={setShowDialog}>
+              <DialogTrigger asChild>
+                <Button size={isMobile ? "sm" : "default"} className="min-h-[44px]">
+                  글쓰기
                 </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent className={isMobile ? "max-w-[95vw] h-[90vh]" : "max-w-2xl"}>
+                <DialogHeader>
+                  <DialogTitle>새 게시글 작성</DialogTitle>
+                </DialogHeader>
+              <ScrollArea className={isMobile ? "h-[calc(90vh-120px)]" : "max-h-[70vh]"}>
+                <div className="space-y-4 pr-4">
+                  <Input
+                    placeholder="제목"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="min-h-[44px]"
+                  />
+                  <Textarea
+                    placeholder="내용을 입력하세요..."
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    className={isMobile ? "min-h-[150px]" : "min-h-[200px]"}
+                  />
+                  <div>
+                    <label htmlFor="file-upload" className="cursor-pointer">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground min-h-[44px]">
+                        <Paperclip className="h-4 w-4" />
+                        파일 첨부 (이미지, 동영상, 문서)
+                      </div>
+                    </label>
+                    <input
+                      id="file-upload"
+                      type="file"
+                      multiple
+                      onChange={handleFileChange}
+                      className="hidden"
+                      accept="image/*,video/*,.pdf,.doc,.docx"
+                    />
+                    {files.length > 0 && (
+                      <div className="mt-2 text-sm text-muted-foreground">
+                        {files.length}개 파일 선택됨
+                      </div>
+                    )}
+                  </div>
+                  <Button 
+                    onClick={handleSubmit} 
+                    disabled={loading} 
+                    className="w-full min-h-[44px]"
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    작성하기
+                  </Button>
+                </div>
+              </ScrollArea>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto space-y-4">
+      <main className="container mx-auto px-4 py-4 md:py-8">
+        <div className="max-w-4xl mx-auto space-y-3 md:space-y-4">
           {posts.map((post) => (
-            <Card key={post.id}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div className="space-y-1 flex-1">
-                    <div className="flex items-center gap-2">
-                      <CardTitle>{post.title}</CardTitle>
+            <Card key={post.id} className={isMobile ? "text-sm" : ""}>
+              <CardHeader className={isMobile ? "p-4 pb-2" : ""}>
+                <div className="flex justify-between items-start gap-2">
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <CardTitle className={isMobile ? "text-base" : ""}>{post.title}</CardTitle>
                       {post.is_pinned && (
-                        <Badge variant="default" className="gap-1">
+                        <Badge variant="default" className="gap-1 shrink-0">
                           <Pin className="h-3 w-3" />
                           공지
                         </Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span>{post.profiles?.full_name || "익명"}</span>
+                    <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground flex-wrap">
+                      <span className="truncate">{post.profiles?.full_name || "익명"}</span>
                       <span>•</span>
-                      <span>{new Date(post.created_at).toLocaleDateString('ko-KR')}</span>
+                      <span className="whitespace-nowrap">{new Date(post.created_at).toLocaleDateString('ko-KR')}</span>
                     </div>
                   </div>
                   {(isAdmin || isElder) && (
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 shrink-0">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handlePinToggle(post.id, post.is_pinned)}
                         title={post.is_pinned ? "공지사항 해제" : "공지사항으로 등록"}
+                        className="min-h-[44px] min-w-[44px]"
                       >
                         {post.is_pinned ? (
                           <PinOff className="h-4 w-4" />
@@ -372,6 +391,7 @@ const Community = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDelete(post.id)}
+                          className="min-h-[44px] min-w-[44px]"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -380,12 +400,14 @@ const Community = () => {
                   )}
                 </div>
               </CardHeader>
-              <CardContent>
-                <p className="whitespace-pre-wrap mb-4">{post.content}</p>
+              <CardContent className={isMobile ? "p-4 pt-2" : ""}>
+                <p className="whitespace-pre-wrap mb-4 break-words">{post.content}</p>
                 {post.attachments && post.attachments.length > 0 && (
                   <div className="space-y-2">
                     {post.attachments.map((attachment, idx) => (
-                      <div key={idx}>{renderAttachment(attachment)}</div>
+                      <div key={idx} className="max-w-full overflow-hidden">
+                        {renderAttachment(attachment)}
+                      </div>
                     ))}
                   </div>
                 )}
