@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, ShoppingBag, Palette, Award, Crown, Check, Coins } from "lucide-react";
+import { ArrowLeft, ShoppingBag, Palette, Award, Crown, Check, Coins, Trophy } from "lucide-react";
 import Footer from "@/components/Footer";
 import { toast } from "sonner";
 
@@ -115,19 +115,44 @@ const Shop = () => {
     return userItems.includes(itemId);
   };
 
-  const getItemIcon = (type: string) => {
-    switch (type) {
-      case 'avatar_frame':
-        return <Award className="h-6 w-6" />;
-      case 'badge':
-        return <Crown className="h-6 w-6" />;
-      case 'theme_color':
-        return <Palette className="h-6 w-6" />;
-      case 'icon':
-        return <Crown className="h-6 w-6" />;
-      default:
-        return <ShoppingBag className="h-6 w-6" />;
+  const getItemIcon = (item: ProfileItem) => {
+    const iconClass = "h-8 w-8";
+    
+    // 프레임 아이템 - 색상으로 구분
+    if (item.item_type === 'avatar_frame') {
+      const color = item.config?.color || '#888888';
+      return (
+        <div className="relative">
+          <Award className={iconClass} style={{ color }} />
+        </div>
+      );
     }
+    
+    // 배지 아이템 - 다양한 아이콘과 색상
+    if (item.item_type === 'badge') {
+      const BadgeIcon = item.config?.icon === 'trophy' ? Trophy : 
+                        item.config?.icon === 'award' ? Award : Crown;
+      const color = item.config?.color || '#888888';
+      return <BadgeIcon className={iconClass} style={{ color }} />;
+    }
+    
+    // 테마 아이템 - 색상 미리보기
+    if (item.item_type === 'theme_color') {
+      const color = item.config?.color || '#888888';
+      return (
+        <div className="flex gap-1">
+          <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: color }} />
+        </div>
+      );
+    }
+    
+    // 아이콘 아이템 - 실제 아이콘 표시
+    if (item.item_type === 'icon') {
+      const IconComponent = item.config?.iconName || '✨';
+      return <span className="text-3xl">{IconComponent}</span>;
+    }
+    
+    return <ShoppingBag className={iconClass} />;
   };
 
   const ItemCard = ({ item }: { item: ProfileItem }) => {
@@ -138,12 +163,12 @@ const Shop = () => {
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-primary/10">
-                {getItemIcon(item.item_type)}
+              <div className="p-4 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center min-w-[60px] min-h-[60px]">
+                {getItemIcon(item)}
               </div>
               <div>
                 <CardTitle className="text-lg">{item.name}</CardTitle>
-                <CardDescription>{item.description}</CardDescription>
+                <CardDescription className="text-sm">{item.description}</CardDescription>
               </div>
             </div>
           </div>
