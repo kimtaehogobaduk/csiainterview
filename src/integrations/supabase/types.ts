@@ -190,6 +190,7 @@ export type Database = {
           ai_model: string | null
           created_at: string | null
           email: string
+          essay_question_count: number | null
           full_name: string | null
           id: string
           updated_at: string | null
@@ -198,6 +199,7 @@ export type Database = {
           ai_model?: string | null
           created_at?: string | null
           email: string
+          essay_question_count?: number | null
           full_name?: string | null
           id: string
           updated_at?: string | null
@@ -206,6 +208,7 @@ export type Database = {
           ai_model?: string | null
           created_at?: string | null
           email?: string
+          essay_question_count?: number | null
           full_name?: string | null
           id?: string
           updated_at?: string | null

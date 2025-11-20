@@ -17,6 +17,7 @@ interface Profile {
   full_name: string;
   email: string;
   ai_model: string;
+  essay_question_count: number;
 }
 
 interface Essay {
@@ -40,7 +41,8 @@ const Profile = () => {
   const [profile, setProfile] = useState<Profile>({ 
     full_name: "", 
     email: "",
-    ai_model: "google/gemini-2.5-flash"
+    ai_model: "google/gemini-2.5-flash",
+    essay_question_count: 10
   });
   const [essays, setEssays] = useState<Essay[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -65,7 +67,7 @@ const Profile = () => {
   const loadProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from("profiles")
-      .select("full_name, email, ai_model")
+      .select("full_name, email, ai_model, essay_question_count")
       .eq("id", userId)
       .single();
 
@@ -77,7 +79,8 @@ const Profile = () => {
     setProfile({
       full_name: data.full_name || "",
       email: data.email || "",
-      ai_model: data.ai_model || "google/gemini-2.5-flash"
+      ai_model: data.ai_model || "google/gemini-2.5-flash",
+      essay_question_count: data.essay_question_count || 10
     });
   };
 
@@ -121,7 +124,8 @@ const Profile = () => {
         .from("profiles")
         .update({ 
           full_name: profile.full_name,
-          ai_model: profile.ai_model
+          ai_model: profile.ai_model,
+          essay_question_count: profile.essay_question_count
         })
         .eq("id", user.id);
 
@@ -215,6 +219,36 @@ const Profile = () => {
                     value={profile.ai_model} 
                     onChange={(value) => setProfile({ ...profile, ai_model: value })}
                   />
+                  <div className="space-y-2">
+                    <Label>자소서 면접 질문 개수</Label>
+                    <select
+                      value={profile.essay_question_count === 5 || profile.essay_question_count === 10 || profile.essay_question_count === 15 || profile.essay_question_count === 20 ? profile.essay_question_count : 'custom'}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === 'custom') {
+                          const customValue = prompt('질문 개수를 입력하세요 (1-50)', String(profile.essay_question_count));
+                          if (customValue) {
+                            const num = parseInt(customValue);
+                            if (num >= 1 && num <= 50) {
+                              setProfile({ ...profile, essay_question_count: num });
+                            } else {
+                              toast.error('1-50 사이의 숫자를 입력해주세요.');
+                            }
+                          }
+                        } else {
+                          setProfile({ ...profile, essay_question_count: parseInt(value) });
+                        }
+                      }}
+                      className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      <option value="5">5개</option>
+                      <option value="10">10개 (기본)</option>
+                      <option value="15">15개</option>
+                      <option value="20">20개</option>
+                      <option value="custom">기타 ({profile.essay_question_count !== 5 && profile.essay_question_count !== 10 && profile.essay_question_count !== 15 && profile.essay_question_count !== 20 ? `${profile.essay_question_count}개` : '직접 입력'})</option>
+                    </select>
+                    <p className="text-xs text-muted-foreground">자소서 기반 면접에서 생성될 질문의 개수를 선택하세요</p>
+                  </div>
                   <Button onClick={handleUpdateProfile} disabled={loading} className="w-full">
                     <Save className="h-4 w-4 mr-2" />
                     {loading ? "저장 중..." : "저장하기"}

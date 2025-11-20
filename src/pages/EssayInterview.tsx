@@ -114,6 +114,7 @@ const EssayInterview = () => {
     score: number | null;
   }>>([]);
   const [selectedModel, setSelectedModel] = useState("google/gemini-2.5-flash");
+  const [questionCount, setQuestionCount] = useState(10);
 
   useEffect(() => {
     loadUserModel();
@@ -149,12 +150,13 @@ const EssayInterview = () => {
     if (user) {
       const { data, error } = await supabase
         .from('profiles')
-        .select('ai_model')
+        .select('ai_model, essay_question_count')
         .eq('id', user.id)
         .single();
       
       if (data && !error) {
         setSelectedModel(data.ai_model || 'google/gemini-2.5-flash');
+        setQuestionCount(data.essay_question_count || 10);
       }
     }
   };
@@ -244,7 +246,7 @@ const EssayInterview = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-questions', {
-        body: { essay: savedEssay }
+        body: { essay: savedEssay, count: questionCount }
       });
 
       if (error) throw error;
