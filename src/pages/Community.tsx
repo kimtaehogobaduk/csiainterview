@@ -13,6 +13,9 @@ import { ArrowLeft, Send, Paperclip, Trash2, Image as ImageIcon, Video, FileText
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import Footer from "@/components/Footer";
 import { useIsMobile } from "@/hooks/use-mobile";
+import FeedbackDialog from "@/components/FeedbackDialog";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
 interface Post {
   id: string;
@@ -81,6 +84,7 @@ const Community = () => {
     const { data } = await supabase
       .from("community_posts")
       .select("*")
+      .eq("is_deleted", false)
       .order("is_pinned", { ascending: false })
       .order("created_at", { ascending: false });
 
@@ -306,11 +310,25 @@ const Community = () => {
                     onChange={(e) => setTitle(e.target.value)}
                     className="min-h-[44px]"
                   />
-                  <Textarea
-                    placeholder="내용을 입력하세요..."
+                  <ReactQuill
+                    theme="snow"
                     value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    className={isMobile ? "min-h-[150px]" : "min-h-[200px]"}
+                    onChange={setContent}
+                    modules={{
+                      toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        [{ 'font': [] }],
+                        [{ 'size': ['small', false, 'large', 'huge'] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'color': [] }, { 'background': [] }],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'align': [] }],
+                        ['link'],
+                        ['clean']
+                      ],
+                    }}
+                    className="bg-background"
+                    style={{ minHeight: "200px" }}
                   />
                   <div>
                     <label htmlFor="file-upload" className="cursor-pointer">
@@ -401,7 +419,10 @@ const Community = () => {
                 </div>
               </CardHeader>
               <CardContent className={isMobile ? "p-4 pt-2" : ""}>
-                <p className="whitespace-pre-wrap mb-4 break-words">{post.content}</p>
+                <div 
+                  className="mb-4 break-words ql-editor-display"
+                  dangerouslySetInnerHTML={{ __html: post.content }}
+                />
                 {post.attachments && post.attachments.length > 0 && (
                   <div className="space-y-2">
                     {post.attachments.map((attachment, idx) => (
@@ -416,6 +437,7 @@ const Community = () => {
           ))}
         </div>
       </main>
+      <FeedbackDialog />
       <Footer />
     </div>
   );
