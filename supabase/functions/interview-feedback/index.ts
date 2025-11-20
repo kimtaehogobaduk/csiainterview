@@ -168,7 +168,8 @@ ${essay}
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
-      ]
+      ],
+      stream: true
     };
 
     // Only add temperature for models that support it
@@ -191,22 +192,15 @@ ${essay}
       throw new Error(`AI API 오류: ${response.status}`);
     }
 
-    const data = await response.json();
-    const feedback = data.choices[0].message.content;
-
-    // Extract score from feedback (both common and essay-based)
-    let score = null;
-    const scoreMatch = feedback.match(/총점[:\s]*(\d+)/);
-    if (scoreMatch) {
-      score = parseInt(scoreMatch[1]);
-    }
-
-    console.log('Feedback generated successfully');
-
-    return new Response(
-      JSON.stringify({ feedback, score }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    // Return streaming response
+    return new Response(response.body, {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
 
   } catch (error: any) {
     console.error('Error:', error);

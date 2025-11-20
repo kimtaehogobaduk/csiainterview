@@ -171,25 +171,86 @@ const CommonInterview = () => {
     }
 
     setLoading(true);
+    
     try {
-      const { data, error } = await supabase.functions.invoke('interview-feedback', {
-        body: {
-          question: parentQuestion,
-          answer: followUpAnswer,
-          type: 'common',
-          isFollowUp: true,
-          model: selectedModel
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/interview-feedback`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({
+            question: parentQuestion,
+            answer: followUpAnswer,
+            type: 'common',
+            isFollowUp: true,
+            model: selectedModel
+          }),
         }
-      });
+      );
 
-      if (error) throw error;
+      if (!response.ok) throw new Error('Failed to get feedback');
+      if (!response.body) throw new Error('No response body');
 
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedText = '';
+      let extractedScore: number | null = null;
+
+      // Add placeholder for streaming update
+      const tempIndex = followUpChain.length;
       setFollowUpChain(prev => [...prev, {
         question: parentQuestion,
         answer: followUpAnswer,
-        feedback: data.feedback,
-        score: data.score
+        feedback: '',
+        score: null
       }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+            
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) {
+                accumulatedText += content;
+                
+                // Update streaming content
+                setFollowUpChain(prev => prev.map((item, idx) => 
+                  idx === tempIndex 
+                    ? { ...item, feedback: accumulatedText }
+                    : item
+                ));
+                
+                // Try to extract score
+                const scoreMatch = accumulatedText.match(/총점\s*(\d+)점/);
+                if (scoreMatch && !extractedScore) {
+                  extractedScore = parseInt(scoreMatch[1]);
+                  setFollowUpChain(prev => prev.map((item, idx) => 
+                    idx === tempIndex 
+                      ? { ...item, score: extractedScore }
+                      : item
+                  ));
+                }
+              }
+            } catch (e) {
+              // Ignore parse errors
+            }
+          }
+        }
+      }
 
       toast.success('피드백을 받았습니다!');
     } catch (error: any) {
@@ -223,20 +284,77 @@ const CommonInterview = () => {
     }
 
     setLoading(true);
+    setFeedback("");
+    setScore(null);
+    
     try {
-      const { data, error } = await supabase.functions.invoke('interview-feedback', {
-        body: {
-          question,
-          answer,
-          type: 'common',
-          model: selectedModel
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/interview-feedback`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({
+            question,
+            answer,
+            type: 'common',
+            model: selectedModel
+          }),
         }
-      });
+      );
 
-      if (error) throw error;
+      if (!response.ok) throw new Error('Failed to get feedback');
+      if (!response.body) throw new Error('No response body');
 
-      setFeedback(data.feedback);
-      setScore(data.score);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedText = '';
+      let extractedScore: number | null = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+            
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) {
+                accumulatedText += content;
+                setFeedback(accumulatedText);
+                
+                // Try to extract score
+                const scoreMatch = accumulatedText.match(/총점\s*(\d+)점/);
+                if (scoreMatch && !extractedScore) {
+                  extractedScore = parseInt(scoreMatch[1]);
+                  setScore(extractedScore);
+                }
+              }
+            } catch (e) {
+              // Ignore parse errors for incomplete JSON
+            }
+          }
+        }
+      }
+
+      // Final score extraction if not found during streaming
+      if (!extractedScore) {
+        const scoreMatch = accumulatedText.match(/총점\s*(\d+)점/);
+        if (scoreMatch) {
+          extractedScore = parseInt(scoreMatch[1]);
+          setScore(extractedScore);
+        }
+      }
       
       // Save session
       const { data: { user } } = await supabase.auth.getUser();
@@ -248,13 +366,15 @@ const CommonInterview = () => {
             session_type: 'common',
             question,
             answer,
-            ai_feedback: data.feedback,
-            score: data.score
+            ai_feedback: accumulatedText,
+            score: extractedScore
           });
 
-        if (saveError) throw saveError;
+        if (saveError) {
+          console.error('Save error:', saveError);
+        }
       }
-      
+
       toast.success('피드백을 받았습니다!');
     } catch (error: any) {
       console.error('Error:', error);
