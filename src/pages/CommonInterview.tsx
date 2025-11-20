@@ -132,7 +132,6 @@ const CommonInterview = () => {
       };
 
       recognitionInstance.onerror = (event: any) => {
-        console.error('Speech recognition error', event.error);
         toast.error('음성 인식 오류가 발생했습니다.');
         setIsRecording(false);
       };
@@ -254,7 +253,6 @@ const CommonInterview = () => {
 
       toast.success('피드백을 받았습니다!');
     } catch (error: any) {
-      console.error('Error:', error);
       toast.error('피드백을 가져오는데 실패했습니다.');
     } finally {
       setLoading(false);
@@ -370,14 +368,10 @@ const CommonInterview = () => {
             score: extractedScore
           });
 
-        if (saveError) {
-          console.error('Save error:', saveError);
-        }
       }
 
       toast.success('피드백을 받았습니다!');
     } catch (error: any) {
-      console.error('Error:', error);
       toast.error('피드백을 가져오는데 실패했습니다.');
     } finally {
       setLoading(false);
