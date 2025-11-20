@@ -52,50 +52,25 @@ const EssayInterview = () => {
     }
   }, []);
 
-  // Auto-save essay every 30 seconds
-  useEffect(() => {
-    if (!essay.trim() || essay === savedEssay) return;
-
-    const autoSaveTimer = setTimeout(async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        const { error: saveError } = await supabase
-          .from('essays')
-          .insert({
-            user_id: user.id,
-            content: essay
-          });
-
-        if (saveError) {
-          await supabase
-            .from('essays')
-            .update({ content: essay, updated_at: new Date().toISOString() })
-            .eq('user_id', user.id);
-        }
-
-        setSavedEssay(essay);
-        toast.success('자동 저장되었습니다.', { duration: 2000 });
-      } catch (error) {
-        console.error('Auto-save error:', error);
-      }
-    }, 30000); // 30 seconds
-
-    return () => clearTimeout(autoSaveTimer);
-  }, [essay, savedEssay]);
-
   const loadSavedEssay = async () => {
-    const { data } = await supabase
-      .from('essays')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    if (data) {
-      setSavedEssay(data.content);
-      setEssay(data.content);
+      const { data } = await supabase
+        .from('essays')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (data) {
+        setSavedEssay(data.content);
+        setEssay(data.content);
+      }
+    } catch (error) {
+      console.error('Load essay error:', error);
     }
   };
 
@@ -150,15 +125,20 @@ const EssayInterview = () => {
   };
 
   const handleGenerateQuestions = async () => {
-    if (!essay.trim()) {
-      toast.error('자기소개서를 먼저 입력해주세요.');
+    if (!savedEssay.trim()) {
+      toast.error('자기소개서를 먼저 저장해주세요.');
+      return;
+    }
+
+    if (essay !== savedEssay) {
+      toast.error('변경된 내용을 먼저 저장해주세요.');
       return;
     }
 
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-questions', {
-        body: { essay }
+        body: { essay: savedEssay }
       });
 
       if (error) throw error;
@@ -203,7 +183,7 @@ const EssayInterview = () => {
         body: {
           question: questions[currentQuestionIndex],
           answer,
-          essay,
+          essay: savedEssay,
           type: 'essay_based'
         }
       });
@@ -295,7 +275,7 @@ const EssayInterview = () => {
                   </Button>
                   <Button
                     onClick={handleGenerateQuestions}
-                    disabled={loading || !essay.trim()}
+                    disabled={loading || !savedEssay.trim() || essay !== savedEssay}
                     variant="default"
                     className="flex-1"
                   >
