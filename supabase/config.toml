@@ -1,0 +1,10 @@
+project_id = "ectjkhvieobbinepncle"
+
+[functions.interview-feedback]
+verify_jwt = true
+
+[functions.generate-questions]
+verify_jwt = true
+
+[functions.essay-check]
+verify_jwt = true
