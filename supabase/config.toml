@@ -11,3 +11,12 @@ verify_jwt = true
 
 [functions.expand-questions]
 verify_jwt = true
+
+[functions.send-verification-code]
+verify_jwt = false
+
+[functions.verify-code]
+verify_jwt = false
+
+[functions.send-reset-email]
+verify_jwt = false
