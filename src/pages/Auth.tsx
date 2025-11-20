@@ -9,7 +9,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { GraduationCap } from "lucide-react";
-import { AdminApprovalWaiting } from "@/components/AdminApprovalWaiting";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -18,8 +17,6 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [dataConsent, setDataConsent] = useState(false);
-  const [waitingForApproval, setWaitingForApproval] = useState(false);
-  const [approvalRequestId, setApprovalRequestId] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -42,44 +39,8 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      
-      // Check if user is admin
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", data.user.id)
-        .eq("role", "admin")
-        .maybeSingle();
-
-      if (roleData) {
-        // User is admin, check if device is approved
-        const deviceToken = localStorage.getItem('admin_approved_device');
-        
-        if (!deviceToken) {
-          // Create approval request
-          const deviceInfo = navigator.userAgent;
-          const { data: requestData, error: requestError } = await supabase
-            .from('admin_approval_requests')
-            .insert({
-              user_id: data.user.id,
-              email: email,
-              device_info: deviceInfo,
-              ip_address: null, // Could use an IP detection service
-            })
-            .select()
-            .single();
-
-          if (requestError) throw requestError;
-
-          setApprovalRequestId(requestData.id);
-          setWaitingForApproval(true);
-          toast.info("관리자 승인 요청이 전송되었습니다.");
-          return;
-        }
-      }
-      
       toast.success("로그인 성공!");
     } catch (error: any) {
       toast.error(error.message || "로그인에 실패했습니다.");
@@ -115,10 +76,6 @@ const Auth = () => {
       setLoading(false);
     }
   };
-
-  if (waitingForApproval && approvalRequestId) {
-    return <AdminApprovalWaiting requestId={approvalRequestId} />;
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/5 p-4">
