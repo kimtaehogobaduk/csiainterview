@@ -9,6 +9,90 @@ import { toast } from "sonner";
 import { ArrowLeft, Mic, MicOff, Send, FileText, CheckCircle, RefreshCw } from "lucide-react";
 import Footer from "@/components/Footer";
 
+interface FollowUpItem {
+  question: string;
+  answer: string;
+  feedback: string;
+  score: number | null;
+}
+
+const FollowUpQuestionCard = ({ 
+  item, 
+  index, 
+  loading, 
+  onSubmit 
+}: { 
+  item: FollowUpItem; 
+  index: number; 
+  loading: boolean;
+  onSubmit: (answer: string, question: string) => Promise<void>;
+}) => {
+  const [nextAnswer, setNextAnswer] = useState("");
+  const [showInput, setShowInput] = useState(false);
+
+  return (
+    <>
+      <Card className="shadow-soft border-accent/20">
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-accent">추가 질문 {index + 1}</CardTitle>
+            {item.score !== null && (
+              <div className="text-xl font-bold">{item.score}점</div>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="p-4 bg-muted rounded-lg">
+            <p className="font-medium">{item.question}</p>
+          </div>
+          <div className="p-4 bg-background rounded-lg">
+            <p className="text-sm text-muted-foreground mb-2">내 답변:</p>
+            <p>{item.answer}</p>
+          </div>
+          <div className="prose prose-sm max-w-none">
+            <p className="text-sm text-muted-foreground mb-2">피드백:</p>
+            <p className="whitespace-pre-wrap">{item.feedback}</p>
+          </div>
+          {!showInput && (
+            <Button onClick={() => setShowInput(true)} variant="outline" className="w-full">
+              추가 질문에 답변하기
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+
+      {showInput && (
+        <Card className="shadow-soft">
+          <CardHeader>
+            <CardTitle>추가 질문 {index + 2}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Textarea
+              placeholder="추가 답변을 입력하세요..."
+              value={nextAnswer}
+              onChange={(e) => setNextAnswer(e.target.value)}
+              rows={6}
+              className="resize-none"
+            />
+            <Button
+              onClick={async () => {
+                await onSubmit(nextAnswer, `${item.question}에 대한 추가 질문: ${item.feedback.split('\n')[0]}`);
+                setNextAnswer("");
+                setShowInput(false);
+              }}
+              disabled={loading || !nextAnswer.trim()}
+              className="w-full"
+            >
+              <Send className="h-4 w-4 mr-2" />
+              AI 피드백 받기
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+    </>
+  );
+};
+
 const EssayInterview = () => {
   const navigate = useNavigate();
   const [essay, setEssay] = useState("");
@@ -22,6 +106,12 @@ const EssayInterview = () => {
   const [loading, setLoading] = useState(false);
   const [recognition, setRecognition] = useState<any>(null);
   const [tab, setTab] = useState("essay");
+  const [followUpChain, setFollowUpChain] = useState<Array<{
+    question: string;
+    answer: string;
+    feedback: string;
+    score: number | null;
+  }>>([]);
 
   useEffect(() => {
     loadSavedEssay();
@@ -225,6 +315,53 @@ const EssayInterview = () => {
       setAnswer("");
       setFeedback("");
       setScore(null);
+      setFollowUpChain([]);
+    }
+  };
+
+  const handlePreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1);
+      setAnswer("");
+      setFeedback("");
+      setScore(null);
+      setFollowUpChain([]);
+    }
+  };
+
+  const handleSubmitFollowUp = async (followUpAnswer: string, parentQuestion: string) => {
+    if (!followUpAnswer.trim()) {
+      toast.error('답변을 입력해주세요.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('interview-feedback', {
+        body: {
+          question: parentQuestion,
+          answer: followUpAnswer,
+          essay: savedEssay,
+          type: 'essay_based',
+          isFollowUp: true
+        }
+      });
+
+      if (error) throw error;
+
+      setFollowUpChain(prev => [...prev, {
+        question: parentQuestion,
+        answer: followUpAnswer,
+        feedback: data.feedback,
+        score: data.score
+      }]);
+
+      toast.success('피드백을 받았습니다!');
+    } catch (error: any) {
+      console.error('Error:', error);
+      toast.error('피드백을 가져오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -292,7 +429,25 @@ const EssayInterview = () => {
                 <Card className="shadow-soft">
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
-                      <span>질문 {currentQuestionIndex + 1} / {questions.length}</span>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handlePreviousQuestion}
+                          disabled={currentQuestionIndex === 0}
+                        >
+                          이전 질문
+                        </Button>
+                        <span>질문 {currentQuestionIndex + 1} / {questions.length}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleNextQuestion}
+                          disabled={currentQuestionIndex === questions.length - 1}
+                        >
+                          다음 질문
+                        </Button>
+                      </div>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -372,14 +527,20 @@ const EssayInterview = () => {
                       <div className="prose prose-sm max-w-none">
                         <p className="whitespace-pre-wrap">{feedback}</p>
                       </div>
-                      {currentQuestionIndex < questions.length - 1 && (
-                        <Button onClick={handleNextQuestion} className="w-full">
-                          다음 질문으로
-                        </Button>
-                      )}
                     </CardContent>
                   </Card>
                 )}
+
+                {/* Follow-up questions chain */}
+                {followUpChain.map((item, index) => (
+                  <FollowUpQuestionCard
+                    key={index}
+                    item={item}
+                    index={index}
+                    loading={loading}
+                    onSubmit={handleSubmitFollowUp}
+                  />
+                ))}
               </div>
             )}
           </TabsContent>

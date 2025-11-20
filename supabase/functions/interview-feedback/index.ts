@@ -12,6 +12,7 @@ const requestSchema = z.object({
   answer: z.string().trim().min(1).max(2000),
   essay: z.string().trim().max(10000).optional(),
   type: z.enum(['common', 'essay_based']),
+  isFollowUp: z.boolean().optional()
 });
 
 serve(async (req) => {
@@ -31,7 +32,7 @@ serve(async (req) => {
       );
     }
     
-    const { question, answer, essay, type } = validationResult.data;
+    const { question, answer, essay, type, isFollowUp } = validationResult.data;
 
     if (!question || !answer) {
       throw new Error('질문과 답변은 필수입니다.');
@@ -47,6 +48,8 @@ serve(async (req) => {
 
     if (type === 'common') {
       systemPrompt = `당신은 청심국제고등학교의 엄격한 면접관입니다. 학생의 답변을 100점 만점으로 매우 엄격하게 평가합니다.
+
+${isFollowUp ? `이것은 추가 질문에 대한 답변입니다. 학생이 이전 피드백을 바탕으로 더 깊이 있는 답변을 할 수 있도록 새로운 추가 질문을 1개만 제시해주세요.` : ''}
 
 평가 기준 (매우 엄격하게 적용):
 1. 내용의 구체성과 진정성 (0-25점)
@@ -94,7 +97,7 @@ serve(async (req) => {
 피드백 형식:
 먼저 "총점 XX점" 형식으로 점수를 명시하고,
 좋았던 점과 부족했던 점을 구체적으로 설명하세요.
-마지막으로 개선 방향을 제시하고 1-2개 추가 질문을 던지세요.`;
+${isFollowUp ? '마지막으로 개선 방향을 제시하고 새로운 추가 질문 1개를 던지세요.' : '마지막으로 개선 방향을 제시하고 1-2개 추가 질문을 던지세요.'}`;
 
       userPrompt = `질문: ${question}
 
@@ -103,6 +106,8 @@ serve(async (req) => {
 이 답변에 대해 엄격하게 점수와 피드백 부탁드립니다.`;
     } else {
       systemPrompt = `당신은 청심국제고등학교의 엄격하고 공정한 면접관입니다. 자기소개서를 읽고 학생의 면접 답변을 100점 만점으로 객관적으로 평가합니다.
+
+${isFollowUp ? `이것은 추가 질문에 대한 답변입니다. 학생이 이전 피드백을 바탕으로 더 깊이 있는 답변을 할 수 있도록 새로운 추가 질문을 1개만 제시해주세요.` : ''}
 
 평가 기준 (각 항목 0-20점, 매우 엄격하게):
 1. 자소서 내용과의 일치성 (0-20점)
@@ -145,7 +150,7 @@ serve(async (req) => {
 피드백 형식:
 먼저 "총점 XX점" 형식으로 점수를 명시하고,
 각 항목별로 어떤 점이 좋았고 무엇이 부족했는지 구체적으로 설명하세요.
-마지막으로 개선이 필요한 부분을 명확히 지적하고, 1-2개의 추가 질문을 던지세요.
+${isFollowUp ? '마지막으로 개선이 필요한 부분을 명확히 지적하고, 새로운 추가 질문 1개를 던지세요.' : '마지막으로 개선이 필요한 부분을 명확히 지적하고, 1-2개의 추가 질문을 던지세요.'}
 
 중요: 점수에 인색하게 대하세요. 정말 잘한 경우에만 높은 점수를 주고, 부족하면 과감하게 낮은 점수를 주어야 학생이 발전할 수 있습니다.`;
 

@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.essay-check]
 verify_jwt = true
+
+[functions.expand-questions]
+verify_jwt = true
