@@ -8,9 +8,9 @@ const corsHeaders = {
 
 // Input validation schema
 const requestSchema = z.object({
-  question: z.string().trim().min(1).max(500),
-  answer: z.string().trim().min(1).max(2000),
-  essay: z.string().trim().max(10000).optional(),
+  question: z.string().trim().min(1).max(1000),
+  answer: z.string().trim().min(1).max(10000),
+  essay: z.string().trim().max(20000).optional(),
   type: z.enum(['common', 'essay_based']),
   isFollowUp: z.boolean().optional(),
   model: z.string().optional()
