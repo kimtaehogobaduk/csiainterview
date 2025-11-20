@@ -357,7 +357,7 @@ const CommonInterview = () => {
       // Save session
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { error: saveError } = await supabase
+        const { data: sessionData, error: saveError } = await supabase
           .from('interview_sessions')
           .insert({
             user_id: user.id,
@@ -366,11 +366,24 @@ const CommonInterview = () => {
             answer,
             ai_feedback: accumulatedText,
             score: extractedScore
+          })
+          .select('id')
+          .single();
+
+        // Award mileage based on score
+        if (!saveError && extractedScore && sessionData) {
+          const mileageAmount = Math.floor(extractedScore / 2); // 점수의 50%를 마일리지로 지급
+          await supabase.rpc('award_mileage', {
+            p_user_id: user.id,
+            p_amount: mileageAmount,
+            p_reason: '공통 면접 연습 완료',
+            p_session_id: sessionData.id
           });
-
+          toast.success(`피드백을 받았습니다! +${mileageAmount} 마일리지`);
+        } else {
+          toast.success('피드백을 받았습니다!');
+        }
       }
-
-      toast.success('피드백을 받았습니다!');
     } catch (error: any) {
       toast.error('피드백을 가져오는데 실패했습니다.');
     } finally {

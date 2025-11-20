@@ -18,6 +18,7 @@ interface Profile {
   email: string;
   ai_model: string;
   essay_question_count: number;
+  mileage?: number;
 }
 
 interface Essay {
@@ -42,7 +43,8 @@ const Profile = () => {
     full_name: "", 
     email: "",
     ai_model: "google/gemini-2.5-flash",
-    essay_question_count: 10
+    essay_question_count: 10,
+    mileage: 0
   });
   const [essays, setEssays] = useState<Essay[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -67,7 +69,7 @@ const Profile = () => {
   const loadProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from("profiles")
-      .select("full_name, email, ai_model, essay_question_count")
+      .select("full_name, email, ai_model, essay_question_count, mileage")
       .eq("id", userId)
       .single();
 
@@ -80,7 +82,8 @@ const Profile = () => {
       full_name: data.full_name || "",
       email: data.email || "",
       ai_model: data.ai_model || "google/gemini-2.5-flash",
-      essay_question_count: data.essay_question_count || 10
+      essay_question_count: data.essay_question_count || 10,
+      mileage: data.mileage || 0
     });
   };
 
@@ -266,20 +269,20 @@ const Profile = () => {
                     <p className="text-center text-muted-foreground">로딩 중...</p>
                   ) : (
                     <div className="space-y-4">
-                      <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
-                        <span className="text-sm font-medium">총 연습 횟수</span>
-                        <span className="text-2xl font-bold text-primary">{sessions.length}회</span>
-                      </div>
-                      <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
-                        <span className="text-sm font-medium">평균 점수</span>
-                        <span className="text-2xl font-bold text-accent">
-                          {avgScore > 0 ? `${avgScore}점` : "-"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
-                        <span className="text-sm font-medium">저장된 자소서</span>
-                        <span className="text-2xl font-bold text-secondary">{essays.length}개</span>
-                      </div>
+                  <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
+                    <span className="text-sm font-medium">총 마일리지</span>
+                    <span className="text-2xl font-bold text-primary">{profile.mileage?.toLocaleString() || 0}P</span>
+                  </div>
+                  <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
+                    <span className="text-sm font-medium">총 연습 횟수</span>
+                    <span className="text-2xl font-bold text-accent">{sessions.length}회</span>
+                  </div>
+                  <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
+                    <span className="text-sm font-medium">평균 점수</span>
+                    <span className="text-2xl font-bold text-secondary">
+                      {avgScore > 0 ? `${avgScore}점` : "-"}
+                    </span>
+                  </div>
                     </div>
                   )}
                 </CardContent>

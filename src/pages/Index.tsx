@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { MessageSquare, FileText, LogOut, User, Shield, Users, ArrowRight, Sparkles, Target, TrendingUp } from "lucide-react";
+import { MessageSquare, FileText, LogOut, User, Shield, Users, ArrowRight, Sparkles, Target, TrendingUp, Trophy, ShoppingBag } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import Footer from "@/components/Footer";
 import logoImage from "@/assets/logo.jpg";
@@ -322,82 +322,132 @@ const Index = () => {
           </div>
 
           {/* Main Cards */}
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
-            <Card 
-              className="group hover:-translate-y-4 cursor-pointer transition-all duration-500 hover:shadow-intense border-2 hover:border-primary/30 animate-fade-in-up"
-              onClick={() => navigate("/common-interview")}
-              style={{ animationDelay: '0.1s' }}
-            >
-              <CardHeader className="space-y-4">
-                <div className="p-4 rounded-2xl bg-gradient-primary w-fit shadow-soft group-hover:shadow-strong group-hover:scale-110 transition-all duration-500">
-                  <MessageSquare className="h-10 w-10 text-white" />
-                </div>
-                <CardTitle className="text-2xl font-bold">공통 면접 질문</CardTitle>
-                <CardDescription className="text-base">
-                  150개의 면접 질문으로 실전 대비
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-muted-foreground leading-relaxed">
-                  랜덤으로 제공되는 질문에 답변하고 실시간 AI 피드백을 받아보세요
-                </p>
-                <Button className="w-full group-hover:shadow-soft transition-all">
-                  시작하기
-                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </CardContent>
-            </Card>
+          <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-6 mb-12">
+          <Card 
+            className="group hover:-translate-y-4 cursor-pointer transition-all duration-500 hover:shadow-intense border-2 hover:border-primary/30 animate-fade-in-up"
+            onClick={() => navigate("/common-interview")}
+            style={{ animationDelay: '0.1s' }}
+          >
+            <CardHeader className="space-y-4">
+              <div className="p-4 rounded-2xl bg-gradient-primary w-fit shadow-soft group-hover:shadow-strong group-hover:scale-110 transition-all duration-500">
+                <MessageSquare className="h-10 w-10 text-white" />
+              </div>
+              <CardTitle className="text-2xl font-bold">공통 면접 질문</CardTitle>
+              <CardDescription className="text-base">
+                150개의 면접 질문으로 실전 대비
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground leading-relaxed">
+                랜덤으로 제공되는 질문에 답변하고 실시간 AI 피드백을 받아보세요
+              </p>
+              <Button className="w-full group-hover:shadow-soft transition-all">
+                시작하기
+                <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </CardContent>
+          </Card>
 
-            <Card 
-              className="group hover:-translate-y-4 cursor-pointer transition-all duration-500 hover:shadow-intense border-2 hover:border-accent/30 animate-fade-in-up"
-              onClick={() => navigate("/essay-interview")}
-              style={{ animationDelay: '0.2s' }}
-            >
-              <CardHeader className="space-y-4">
-                <div className="p-4 rounded-2xl bg-gradient-accent w-fit shadow-soft group-hover:shadow-strong group-hover:scale-110 transition-all duration-500">
-                  <FileText className="h-10 w-10 text-white" />
-                </div>
-                <CardTitle className="text-2xl font-bold">자소서 기반 면접</CardTitle>
-                <CardDescription className="text-base">
-                  자기소개서 분석 맞춤 질문
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-muted-foreground leading-relaxed">
-                  자소서를 입력하면 AI가 맞춤 질문을 생성하고 평가합니다
-                </p>
-                <Button className="w-full bg-gradient-accent hover:opacity-90 transition-all group-hover:shadow-soft">
-                  시작하기
-                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </CardContent>
-            </Card>
+          <Card 
+            className="group hover:-translate-y-4 cursor-pointer transition-all duration-500 hover:shadow-intense border-2 hover:border-accent/30 animate-fade-in-up"
+            onClick={() => navigate("/essay-interview")}
+            style={{ animationDelay: '0.2s' }}
+          >
+            <CardHeader className="space-y-4">
+              <div className="p-4 rounded-2xl bg-gradient-accent w-fit shadow-soft group-hover:shadow-strong group-hover:scale-110 transition-all duration-500">
+                <FileText className="h-10 w-10 text-white" />
+              </div>
+              <CardTitle className="text-2xl font-bold">자소서 기반 면접</CardTitle>
+              <CardDescription className="text-base">
+                자기소개서 분석 맞춤 질문
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground leading-relaxed">
+                자소서를 입력하면 AI가 맞춤 질문을 생성하고 평가합니다
+              </p>
+              <Button className="w-full bg-gradient-accent hover:opacity-90 transition-all group-hover:shadow-soft">
+                시작하기
+                <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </CardContent>
+          </Card>
 
-            <Card 
-              className="group hover:-translate-y-4 cursor-pointer transition-all duration-500 hover:shadow-intense border-2 hover:border-secondary/30 animate-fade-in-up"
-              onClick={() => navigate("/community")}
-              style={{ animationDelay: '0.3s' }}
-            >
-              <CardHeader className="space-y-4">
-                <div className="p-4 rounded-2xl bg-gradient-secondary w-fit shadow-soft group-hover:shadow-strong group-hover:scale-110 transition-all duration-500">
-                  <Users className="h-10 w-10 text-white" />
-                </div>
-                <CardTitle className="text-2xl font-bold">커뮤니티</CardTitle>
-                <CardDescription className="text-base">
-                  입시 정보 공유 및 소통
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-muted-foreground leading-relaxed">
-                  청심국제고 입시에 대해 자유롭게 이야기를 나누세요
-                </p>
-                <Button className="w-full bg-gradient-secondary hover:opacity-90 transition-all group-hover:shadow-soft">
-                  참여하기
-                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+          <Card 
+            className="group hover:-translate-y-4 cursor-pointer transition-all duration-500 hover:shadow-intense border-2 hover:border-secondary/30 animate-fade-in-up"
+            onClick={() => navigate("/community")}
+            style={{ animationDelay: '0.3s' }}
+          >
+            <CardHeader className="space-y-4">
+              <div className="p-4 rounded-2xl bg-gradient-secondary w-fit shadow-soft group-hover:shadow-strong group-hover:scale-110 transition-all duration-500">
+                <Users className="h-10 w-10 text-white" />
+              </div>
+              <CardTitle className="text-2xl font-bold">커뮤니티</CardTitle>
+              <CardDescription className="text-base">
+                입시 정보 공유 및 소통
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground leading-relaxed">
+                청심국제고 입시에 대해 자유롭게 이야기를 나누세요
+              </p>
+              <Button className="w-full bg-gradient-secondary hover:opacity-90 transition-all group-hover:shadow-soft">
+                참여하기
+                <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="group hover:-translate-y-4 cursor-pointer transition-all duration-500 hover:shadow-intense border-2 hover:border-yellow-500/30 animate-fade-in-up"
+            onClick={() => navigate("/leaderboard")}
+            style={{ animationDelay: '0.4s' }}
+          >
+            <CardHeader className="space-y-4">
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-yellow-400 to-yellow-600 w-fit shadow-soft group-hover:shadow-strong group-hover:scale-110 transition-all duration-500">
+                <Trophy className="h-10 w-10 text-white" />
+              </div>
+              <CardTitle className="text-2xl font-bold">리더보드</CardTitle>
+              <CardDescription className="text-base">
+                월간 마일리지 순위
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground leading-relaxed">
+                이번 달 최고의 학습자들을 확인해보세요
+              </p>
+              <Button className="w-full bg-gradient-to-r from-yellow-400 to-yellow-600 hover:opacity-90 transition-all group-hover:shadow-soft">
+                순위 보기
+                <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="group hover:-translate-y-4 cursor-pointer transition-all duration-500 hover:shadow-intense border-2 hover:border-purple-500/30 animate-fade-in-up"
+            onClick={() => navigate("/shop")}
+            style={{ animationDelay: '0.5s' }}
+          >
+            <CardHeader className="space-y-4">
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-500 to-purple-700 w-fit shadow-soft group-hover:shadow-strong group-hover:scale-110 transition-all duration-500">
+                <ShoppingBag className="h-10 w-10 text-white" />
+              </div>
+              <CardTitle className="text-2xl font-bold">상점</CardTitle>
+              <CardDescription className="text-base">
+                프로필 꾸미기 아이템
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground leading-relaxed">
+                마일리지로 프로필을 멋지게 꾸며보세요
+              </p>
+              <Button className="w-full bg-gradient-to-r from-purple-500 to-purple-700 hover:opacity-90 transition-all group-hover:shadow-soft">
+                둘러보기
+                <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
         </div>
       </div>
       <Footer />
