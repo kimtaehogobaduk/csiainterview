@@ -22,6 +22,7 @@ interface Profile {
   email: string;
   full_name: string | null;
   created_at: string | null;
+  mileage?: number;
   role?: string;
 }
 
@@ -70,6 +71,9 @@ const AdminDashboard = () => {
   const [selectedSession, setSelectedSession] = useState<InterviewSession | null>(null);
   const [selectedUserForRole, setSelectedUserForRole] = useState<Profile | null>(null);
   const [newRole, setNewRole] = useState<string>("");
+  const [selectedUserForMileage, setSelectedUserForMileage] = useState<Profile | null>(null);
+  const [mileageAmount, setMileageAmount] = useState<string>("");
+  const [mileageReason, setMileageReason] = useState<string>("");
 
   useEffect(() => {
     checkAuth();
@@ -140,7 +144,11 @@ const AdminDashboard = () => {
             .eq("user_id", profile.id)
             .maybeSingle();
           
-          return { ...profile, role: roleData?.role || "user" };
+          return { 
+            ...profile, 
+            role: roleData?.role || "user",
+            mileage: profile.mileage || 0
+          };
         })
       );
       setProfiles(profilesWithRoles);
@@ -311,6 +319,36 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleManageMileage = async () => {
+    if (!selectedUserForMileage || !mileageAmount || !mileageReason) {
+      toast.error("모든 필드를 입력해주세요.");
+      return;
+    }
+
+    const amount = parseInt(mileageAmount);
+    if (isNaN(amount)) {
+      toast.error("올바른 숫자를 입력해주세요.");
+      return;
+    }
+
+    try {
+      await supabase.rpc('award_mileage', {
+        p_user_id: selectedUserForMileage.id,
+        p_amount: amount,
+        p_reason: mileageReason
+      });
+
+      toast.success(`마일리지가 ${amount > 0 ? '지급' : '차감'}되었습니다.`);
+      setSelectedUserForMileage(null);
+      setMileageAmount("");
+      setMileageReason("");
+      loadAllData();
+    } catch (error) {
+      console.error("Mileage management error:", error);
+      toast.error("마일리지 관리 중 오류가 발생했습니다.");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -430,10 +468,60 @@ const AdminDashboard = () => {
                               </Badge>
                             </div>
                             <p className="text-xs text-muted-foreground">가입일: {formatDate(profile.created_at)}</p>
+                            <p className="text-xs font-bold text-primary">마일리지: {profile.mileage?.toLocaleString() || 0}P</p>
                           </div>
                         </CardHeader>
                         <CardContent>
                           <div className="flex flex-col gap-2">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  className="w-full min-h-[44px]"
+                                  onClick={() => {
+                                    setSelectedUserForMileage(profile);
+                                    setMileageAmount("");
+                                    setMileageReason("");
+                                  }}
+                                >
+                                  마일리지 관리
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-[90vw] md:max-w-md">
+                                <DialogHeader>
+                                  <DialogTitle>마일리지 관리</DialogTitle>
+                                  <DialogDescription className="break-words">
+                                    {profile.email}의 마일리지를 관리합니다. (현재: {profile.mileage?.toLocaleString() || 0}P)
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <div>
+                                    <Label>마일리지 변경량</Label>
+                                    <Input
+                                      type="number"
+                                      placeholder="양수는 지급, 음수는 차감"
+                                      value={mileageAmount}
+                                      onChange={(e) => setMileageAmount(e.target.value)}
+                                    />
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      예: 100 (지급), -50 (차감)
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <Label>사유</Label>
+                                    <Input
+                                      placeholder="마일리지 변경 사유"
+                                      value={mileageReason}
+                                      onChange={(e) => setMileageReason(e.target.value)}
+                                    />
+                                  </div>
+                                  <Button onClick={handleManageMileage} className="w-full min-h-[44px]">
+                                    적용하기
+                                  </Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
                             <Dialog>
                               <DialogTrigger asChild>
                                 <Button 
@@ -507,6 +595,7 @@ const AdminDashboard = () => {
                           <TableHead>이메일</TableHead>
                           <TableHead>이름</TableHead>
                           <TableHead>역할</TableHead>
+                          <TableHead>마일리지</TableHead>
                           <TableHead>가입일</TableHead>
                           <TableHead className="text-right">작업</TableHead>
                         </TableRow>
