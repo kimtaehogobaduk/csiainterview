@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { ArrowLeft, Send, Paperclip, Trash2, Image as ImageIcon, Video, FileText } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+import Footer from "@/components/Footer";
 
 interface Post {
   id: string;
@@ -314,6 +315,7 @@ const Community = () => {
           ))}
         </div>
       </main>
+      <Footer />
     </div>
   );
 };

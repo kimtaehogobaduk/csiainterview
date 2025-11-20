@@ -8,7 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { GraduationCap } from "lucide-react";
+import Footer from "@/components/Footer";
+import logoImage from "@/assets/logo.jpg";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -82,8 +83,8 @@ const Auth = () => {
       <Card className="w-full max-w-md shadow-strong">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <div className="h-16 w-16 rounded-full bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center shadow-soft">
-              <GraduationCap className="h-8 w-8 text-primary-foreground" />
+            <div className="h-16 w-16 rounded-lg overflow-hidden shadow-soft">
+              <img src={logoImage} alt="합격의 길" className="w-full h-full object-cover" />
             </div>
           </div>
           <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
@@ -183,6 +184,7 @@ const Auth = () => {
           </Tabs>
         </CardContent>
       </Card>
+      <Footer />
     </div>
   );
 };

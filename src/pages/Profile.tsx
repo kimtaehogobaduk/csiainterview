@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, User, FileText, MessageSquare, Save, Trash2 } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+import Footer from "@/components/Footer";
 
 interface Profile {
   full_name: string;
@@ -345,6 +346,7 @@ const Profile = () => {
           </TabsContent>
         </Tabs>
       </div>
+      <Footer />
     </div>
   );
 };

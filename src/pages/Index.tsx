@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { GraduationCap, MessageSquare, FileText, LogOut, User, Shield } from "lucide-react";
+import { MessageSquare, FileText, LogOut, User, Shield } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+import Footer from "@/components/Footer";
+import logoImage from "@/assets/logo.jpg";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -73,8 +75,8 @@ const Index = () => {
         <div className="container mx-auto px-4 py-16">
           <div className="text-center mb-16">
             <div className="flex justify-center mb-6">
-              <div className="h-24 w-24 rounded-full bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center shadow-strong">
-                <GraduationCap className="h-12 w-12 text-primary-foreground" />
+              <div className="h-24 w-24 rounded-lg overflow-hidden shadow-strong">
+                <img src={logoImage} alt="합격의 길" className="w-full h-full object-cover" />
               </div>
             </div>
             <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
@@ -136,6 +138,7 @@ const Index = () => {
             </Button>
           </div>
         </div>
+        <Footer />
       </div>
     );
   }
@@ -145,7 +148,7 @@ const Index = () => {
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <GraduationCap className="h-8 w-8 text-primary" />
+            <img src={logoImage} alt="합격의 길" className="h-10 w-10 rounded object-cover" />
             <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               합격의 길
             </h1>
@@ -234,6 +237,7 @@ const Index = () => {
           </Card>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

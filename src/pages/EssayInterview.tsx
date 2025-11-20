@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, Mic, MicOff, Send, FileText, CheckCircle, RefreshCw } from "lucide-react";
+import Footer from "@/components/Footer";
 
 const EssayInterview = () => {
   const navigate = useNavigate();
@@ -404,6 +405,7 @@ const EssayInterview = () => {
           </TabsContent>
         </Tabs>
       </div>
+      <Footer />
     </div>
   );
 };

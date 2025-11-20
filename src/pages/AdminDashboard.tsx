@@ -15,6 +15,7 @@ import { Shield, Users, MessageSquare, FileText, BarChart, Trash2, Send, Downloa
 import { toast } from "sonner";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { useIsMobile } from "@/hooks/use-mobile";
+import Footer from "@/components/Footer";
 
 interface Profile {
   id: string;
@@ -874,6 +875,7 @@ const AdminDashboard = () => {
           </TabsContent>
         </Tabs>
       </div>
+      <Footer />
     </div>
   );
 };
