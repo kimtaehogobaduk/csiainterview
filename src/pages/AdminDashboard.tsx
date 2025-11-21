@@ -81,12 +81,25 @@ const AdminDashboard = () => {
 
   const checkAuth = async () => {
     try {
+      // Check if localStorage is accessible
+      try {
+        localStorage.getItem('test');
+      } catch (e) {
+        console.error('localStorage not accessible in AdminDashboard:', e);
+        toast.error("브라우저의 저장소 접근이 차단되었습니다. 시크릿 모드를 종료하거나 브라우저 설정에서 쿠키 및 사이트 데이터를 허용해주세요.", {
+          duration: 8000,
+        });
+        navigate("/");
+        return;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       
       console.log('AdminDashboard - Current session:', session?.user?.email);
       
       if (!session?.user) {
         console.log('AdminDashboard - No session, redirecting to auth');
+        toast.error("로그인이 필요합니다.");
         navigate("/auth");
         return;
       }
@@ -105,7 +118,7 @@ const AdminDashboard = () => {
 
       if (error) {
         console.error('AdminDashboard - Role check error:', error);
-        toast.error("역할 확인 중 오류가 발생했습니다.");
+        toast.error("역할 확인 중 오류가 발생했습니다. 네트워크 연결을 확인해주세요.");
         navigate("/");
         return;
       }
@@ -123,7 +136,7 @@ const AdminDashboard = () => {
       loadAllData();
     } catch (error) {
       console.error('AdminDashboard - checkAuth exception:', error);
-      toast.error("인증 확인 중 오류가 발생했습니다.");
+      toast.error("인증 확인 중 오류가 발생했습니다. 페이지를 새로고침해주세요.");
       navigate("/");
     }
   };
