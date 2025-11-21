@@ -7,6 +7,7 @@ import { MessageSquare, FileText, LogOut, User, Shield, Users, ArrowRight, Spark
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import Footer from "@/components/Footer";
 import logoImage from "@/assets/logo.jpg";
+import { toast } from "sonner";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -41,6 +42,16 @@ const Index = () => {
 
   const checkAdmin = async (userId: string) => {
     try {
+      // Check if localStorage is accessible
+      try {
+        localStorage.getItem('test');
+      } catch (e) {
+        console.error('localStorage not accessible:', e);
+        toast.error("브라우저의 저장소 접근이 차단되었습니다. 시크릿 모드가 아닌지 확인하거나 브라우저 설정에서 쿠키 및 사이트 데이터를 허용해주세요.");
+        setIsAdmin(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
