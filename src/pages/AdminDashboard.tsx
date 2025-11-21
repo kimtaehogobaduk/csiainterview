@@ -516,6 +516,8 @@ const AdminDashboard = () => {
                                       placeholder="양수는 지급, 음수는 차감"
                                       value={mileageAmount}
                                       onChange={(e) => setMileageAmount(e.target.value)}
+                                      max={100000000000000000000}
+                                      min={-100000000000000000000}
                                     />
                                     <p className="text-xs text-muted-foreground mt-1">
                                       예: 100 (지급), -50 (차감)
@@ -658,6 +660,8 @@ const AdminDashboard = () => {
                                       placeholder="양수는 지급, 음수는 차감"
                                       value={mileageAmount}
                                       onChange={(e) => setMileageAmount(e.target.value)}
+                                      max={100000000000000000000}
+                                      min={-100000000000000000000}
                                     />
                                     <p className="text-xs text-muted-foreground mt-1">
                                       예: 100 (지급), -50 (차감)
