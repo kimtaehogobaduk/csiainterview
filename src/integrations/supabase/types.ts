@@ -283,6 +283,7 @@ export type Database = {
           ai_model: string | null
           created_at: string | null
           email: string
+          enable_camera: boolean | null
           essay_question_count: number | null
           full_name: string | null
           id: string
@@ -293,6 +294,7 @@ export type Database = {
           ai_model?: string | null
           created_at?: string | null
           email: string
+          enable_camera?: boolean | null
           essay_question_count?: number | null
           full_name?: string | null
           id: string
@@ -303,6 +305,7 @@ export type Database = {
           ai_model?: string | null
           created_at?: string | null
           email?: string
+          enable_camera?: boolean | null
           essay_question_count?: number | null
           full_name?: string | null
           id?: string

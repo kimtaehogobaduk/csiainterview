@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, User, FileText, MessageSquare, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, User, FileText, MessageSquare, Save, Trash2, Video } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import Footer from "@/components/Footer";
 import ModelSelector from "@/components/ModelSelector";
@@ -19,6 +20,7 @@ interface Profile {
   ai_model: string;
   essay_question_count: number;
   mileage?: number;
+  enable_camera?: boolean;
 }
 
 interface Essay {
@@ -44,7 +46,8 @@ const Profile = () => {
     email: "",
     ai_model: "google/gemini-2.5-flash",
     essay_question_count: 10,
-    mileage: 0
+    mileage: 0,
+    enable_camera: false
   });
   const [essays, setEssays] = useState<Essay[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -69,7 +72,7 @@ const Profile = () => {
   const loadProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from("profiles")
-      .select("full_name, email, ai_model, essay_question_count, mileage")
+      .select("full_name, email, ai_model, essay_question_count, mileage, enable_camera")
       .eq("id", userId)
       .single();
 
@@ -83,14 +86,19 @@ const Profile = () => {
       email: data.email || "",
       ai_model: data.ai_model || "google/gemini-2.5-flash",
       essay_question_count: data.essay_question_count || 10,
-      mileage: data.mileage || 0
+      mileage: data.mileage || 0,
+      enable_camera: data.enable_camera || false
     });
   };
 
   const loadEssays = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
     const { data, error } = await supabase
       .from("essays")
       .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -128,7 +136,8 @@ const Profile = () => {
         .update({ 
           full_name: profile.full_name,
           ai_model: profile.ai_model,
-          essay_question_count: profile.essay_question_count
+          essay_question_count: profile.essay_question_count,
+          enable_camera: profile.enable_camera
         })
         .eq("id", user.id);
 
@@ -251,6 +260,21 @@ const Profile = () => {
                       <option value="custom">기타 ({profile.essay_question_count !== 5 && profile.essay_question_count !== 10 && profile.essay_question_count !== 15 && profile.essay_question_count !== 20 ? `${profile.essay_question_count}개` : '직접 입력'})</option>
                     </select>
                     <p className="text-xs text-muted-foreground">자소서 기반 면접에서 생성될 질문의 개수를 선택하세요</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label className="flex items-center gap-2">
+                          <Video className="h-4 w-4" />
+                          카메라 영상
+                        </Label>
+                        <p className="text-xs text-muted-foreground">면접 연습 중 카메라 미리보기 표시</p>
+                      </div>
+                      <Switch
+                        checked={profile.enable_camera}
+                        onCheckedChange={(checked) => setProfile({ ...profile, enable_camera: checked })}
+                      />
+                    </div>
                   </div>
                   <Button onClick={handleUpdateProfile} disabled={loading} className="w-full">
                     <Save className="h-4 w-4 mr-2" />

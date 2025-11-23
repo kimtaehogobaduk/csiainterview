@@ -5,10 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Mic, MicOff, RefreshCw, Send } from "lucide-react";
+import { ArrowLeft, Mic, MicOff, RefreshCw, Send, Play, Pause } from "lucide-react";
 import { getRandomQuestion } from "@/constants/questions";
 import Footer from "@/components/Footer";
 import FormattedFeedback from "@/components/FormattedFeedback";
+import AudioAnalysisChart from "@/components/AudioAnalysisChart";
+import VideoPreview from "@/components/VideoPreview";
 
 interface FollowUpItem {
   question: string;
@@ -104,6 +106,16 @@ const CommonInterview = () => {
   const [loading, setLoading] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
+  const [recordedAudioBlob, setRecordedAudioBlob] = useState<Blob | null>(null);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [audioScores, setAudioScores] = useState<{
+    pronunciation: number;
+    speed: number;
+    fluency: number;
+    intonation: number;
+    delivery: number;
+  } | null>(null);
+  const [enableCamera, setEnableCamera] = useState(false);
   const [followUpChain, setFollowUpChain] = useState<Array<{
     question: string;
     answer: string;
@@ -114,20 +126,21 @@ const CommonInterview = () => {
 
   useEffect(() => {
     setQuestion(getRandomQuestion());
-    loadUserModel();
+    loadUserSettings();
   }, []);
 
-  const loadUserModel = async () => {
+  const loadUserSettings = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const { data, error } = await supabase
         .from('profiles')
-        .select('ai_model')
+        .select('ai_model, enable_camera')
         .eq('id', user.id)
         .single();
       
       if (data && !error) {
         setSelectedModel(data.ai_model || 'google/gemini-2.5-flash');
+        setEnableCamera(data.enable_camera || false);
       }
     }
   };
@@ -138,6 +151,8 @@ const CommonInterview = () => {
     setFeedback("");
     setScore(null);
     setFollowUpChain([]);
+    setRecordedAudioBlob(null);
+    setAudioScores(null);
   };
 
   const handleSubmitFollowUp = async (followUpAnswer: string, parentQuestion: string) => {
@@ -259,6 +274,7 @@ const CommonInterview = () => {
         recorder.onstop = async () => {
           const audioBlob = new Blob(chunks, { type: 'audio/webm' });
           setAudioChunks([audioBlob]);
+          setRecordedAudioBlob(audioBlob);
           
           // Convert to base64 and submit
           const reader = new FileReader();
@@ -315,6 +331,7 @@ const CommonInterview = () => {
       const decoder = new TextDecoder();
       let accumulatedText = '';
       let extractedScore: number | null = null;
+      let scores = { pronunciation: 0, speed: 0, fluency: 0, intonation: 0, delivery: 0 };
 
       while (true) {
         const { done, value } = await reader.read();
@@ -335,7 +352,22 @@ const CommonInterview = () => {
                 accumulatedText += content;
                 setFeedback(accumulatedText);
                 
-                // Try to extract score
+                // Extract individual scores
+                const pronunciationMatch = accumulatedText.match(/발음.*?(\d+)점/);
+                const speedMatch = accumulatedText.match(/속도.*?(\d+)점/);
+                const fluencyMatch = accumulatedText.match(/유창성.*?(\d+)점/);
+                const intonationMatch = accumulatedText.match(/억양.*?(\d+)점/);
+                const deliveryMatch = accumulatedText.match(/전달력.*?(\d+)점/);
+                
+                if (pronunciationMatch) scores.pronunciation = parseInt(pronunciationMatch[1]);
+                if (speedMatch) scores.speed = parseInt(speedMatch[1]);
+                if (fluencyMatch) scores.fluency = parseInt(fluencyMatch[1]);
+                if (intonationMatch) scores.intonation = parseInt(intonationMatch[1]);
+                if (deliveryMatch) scores.delivery = parseInt(deliveryMatch[1]);
+                
+                setAudioScores(scores);
+                
+                // Try to extract total score
                 const scoreMatch = accumulatedText.match(/총점\s*(\d+)점/);
                 if (scoreMatch && !extractedScore) {
                   extractedScore = parseInt(scoreMatch[1]);
@@ -511,9 +543,18 @@ const CommonInterview = () => {
     }
   };
 
+  const playRecordedAudio = async () => {
+    if (!recordedAudioBlob) return;
+    
+    const audio = new Audio(URL.createObjectURL(recordedAudioBlob));
+    audio.onended = () => setIsPlayingAudio(false);
+    setIsPlayingAudio(true);
+    audio.play();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/5">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
         <Button
           variant="ghost"
           onClick={() => navigate("/")}
@@ -523,7 +564,8 @@ const CommonInterview = () => {
           돌아가기
         </Button>
 
-        <div className="space-y-6">
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
           <Card className="shadow-soft">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-2xl">공통 면접 질문</CardTitle>
@@ -600,17 +642,33 @@ const CommonInterview = () => {
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle className="text-primary">AI 피드백</CardTitle>
-                  {score !== null && (
-                    <div className="text-2xl font-bold text-accent">
-                      {score}점 / 100점
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {recordedAudioBlob && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={playRecordedAudio}
+                        disabled={isPlayingAudio}
+                      >
+                        {isPlayingAudio ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                      </Button>
+                    )}
+                    {score !== null && (
+                      <div className="text-2xl font-bold text-accent">
+                        {score}점 / 100점
+                      </div>
+                    )}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormattedFeedback content={feedback} />
               </CardContent>
             </Card>
+          )}
+
+          {audioScores && (
+            <AudioAnalysisChart scores={audioScores} />
           )}
 
           {/* Follow-up questions chain */}
@@ -623,6 +681,13 @@ const CommonInterview = () => {
               onSubmit={handleSubmitFollowUp}
             />
           ))}
+          </div>
+
+          {enableCamera && (
+            <div className="lg:col-span-1">
+              <VideoPreview />
+            </div>
+          )}
         </div>
       </div>
       <Footer />
