@@ -102,7 +102,8 @@ const CommonInterview = () => {
   const [feedback, setFeedback] = useState("");
   const [score, setScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
-  const [recognition, setRecognition] = useState<any>(null);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const [followUpChain, setFollowUpChain] = useState<Array<{
     question: string;
     answer: string;
@@ -114,30 +115,6 @@ const CommonInterview = () => {
   useEffect(() => {
     setQuestion(getRandomQuestion());
     loadUserModel();
-
-    // Initialize speech recognition
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      const recognitionInstance = new SpeechRecognition();
-      recognitionInstance.continuous = true;
-      recognitionInstance.interimResults = true;
-      recognitionInstance.lang = 'ko-KR';
-
-      recognitionInstance.onresult = (event: any) => {
-        let transcript = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          transcript += event.results[i][0].transcript;
-        }
-        setAnswer(prev => prev + ' ' + transcript);
-      };
-
-      recognitionInstance.onerror = (event: any) => {
-        toast.error('음성 인식 오류가 발생했습니다.');
-        setIsRecording(false);
-      };
-
-      setRecognition(recognitionInstance);
-    }
   }, []);
 
   const loadUserModel = async () => {
@@ -259,19 +236,162 @@ const CommonInterview = () => {
     }
   };
 
-  const toggleRecording = () => {
-    if (!recognition) {
-      toast.error('음성 인식이 지원되지 않는 브라우저입니다.');
-      return;
-    }
-
+  const toggleRecording = async () => {
     if (isRecording) {
-      recognition.stop();
+      // Stop recording
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
       setIsRecording(false);
     } else {
-      recognition.start();
-      setIsRecording(true);
-      toast.success('음성 인식을 시작합니다.');
+      // Start recording
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+        const chunks: Blob[] = [];
+
+        recorder.ondataavailable = (e) => {
+          if (e.data.size > 0) {
+            chunks.push(e.data);
+          }
+        };
+
+        recorder.onstop = async () => {
+          const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+          setAudioChunks([audioBlob]);
+          
+          // Convert to base64 and submit
+          const reader = new FileReader();
+          reader.readAsDataURL(audioBlob);
+          reader.onloadend = async () => {
+            const base64Audio = reader.result?.toString().split(',')[1];
+            if (base64Audio) {
+              await handleSubmitAudio(base64Audio);
+            }
+          };
+
+          // Stop all tracks
+          stream.getTracks().forEach(track => track.stop());
+        };
+
+        recorder.start();
+        setMediaRecorder(recorder);
+        setIsRecording(true);
+        toast.success('음성 녹음을 시작합니다.');
+      } catch (error) {
+        console.error('Error accessing microphone:', error);
+        toast.error('마이크 접근 권한이 필요합니다.');
+      }
+    }
+  };
+
+  const handleSubmitAudio = async (audioBase64: string) => {
+    setLoading(true);
+    setFeedback("");
+    setScore(null);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/audio-analysis`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({
+            audioBase64,
+            question,
+            type: 'common'
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to get audio analysis');
+      if (!response.body) throw new Error('No response body');
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedText = '';
+      let extractedScore: number | null = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+            
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) {
+                accumulatedText += content;
+                setFeedback(accumulatedText);
+                
+                // Try to extract score
+                const scoreMatch = accumulatedText.match(/총점\s*(\d+)점/);
+                if (scoreMatch && !extractedScore) {
+                  extractedScore = parseInt(scoreMatch[1]);
+                  setScore(extractedScore);
+                }
+              }
+            } catch (e) {
+              // Ignore parse errors
+            }
+          }
+        }
+      }
+
+      // Final score extraction
+      if (!extractedScore) {
+        const scoreMatch = accumulatedText.match(/총점\s*(\d+)점/);
+        if (scoreMatch) {
+          extractedScore = parseInt(scoreMatch[1]);
+          setScore(extractedScore);
+        }
+      }
+      
+      // Save session
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: sessionData, error: saveError } = await supabase
+          .from('interview_sessions')
+          .insert({
+            user_id: user.id,
+            session_type: 'common',
+            question,
+            answer: '음성 답변',
+            ai_feedback: accumulatedText,
+            score: extractedScore
+          })
+          .select('id')
+          .single();
+
+        if (!saveError && extractedScore && sessionData) {
+          const mileageAmount = extractedScore + 30;
+          await supabase.rpc('award_mileage', {
+            p_user_id: user.id,
+            p_amount: mileageAmount,
+            p_reason: '공통 면접 연습 완료',
+            p_session_id: sessionData.id
+          });
+          toast.success(`피드백을 받았습니다! +${mileageAmount} 마일리지`);
+        } else {
+          toast.success('피드백을 받았습니다!');
+        }
+      }
+    } catch (error: any) {
+      console.error('Audio analysis error:', error);
+      toast.error('음성 분석에 실패했습니다.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -443,12 +563,19 @@ const CommonInterview = () => {
                 </div>
 
                 <Textarea
-                  placeholder="여기에 답변을 입력하거나 음성으로 녹음하세요..."
+                  placeholder="여기에 답변을 입력하세요..."
                   value={answer}
                   onChange={(e) => setAnswer(e.target.value)}
                   rows={8}
                   className="resize-none"
                 />
+                
+                {isRecording && (
+                  <div className="flex items-center gap-2 text-destructive animate-pulse">
+                    <div className="h-3 w-3 rounded-full bg-destructive" />
+                    <span className="text-sm font-medium">녹음 중... (답변이 끝나면 다시 클릭하세요)</span>
+                  </div>
+                )}
 
                 <Button
                   onClick={handleSubmit}
