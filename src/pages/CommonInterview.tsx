@@ -5,12 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Mic, MicOff, RefreshCw, Send, Play, Pause } from "lucide-react";
+import { ArrowLeft, Mic, MicOff, RefreshCw, Send, Square } from "lucide-react";
 import { getRandomQuestion } from "@/constants/questions";
 import Footer from "@/components/Footer";
 import FormattedFeedback from "@/components/FormattedFeedback";
 import AudioAnalysisChart from "@/components/AudioAnalysisChart";
 import VideoPreview from "@/components/VideoPreview";
+import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 
 interface FollowUpItem {
   question: string;
@@ -100,14 +101,9 @@ const CommonInterview = () => {
   const navigate = useNavigate();
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
-  const [isRecording, setIsRecording] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [score, setScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
-  const [recordedAudioBlob, setRecordedAudioBlob] = useState<Blob | null>(null);
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [audioScores, setAudioScores] = useState<{
     pronunciation: number;
     speed: number;
@@ -123,6 +119,16 @@ const CommonInterview = () => {
     score: number | null;
   }>>([]);
   const [selectedModel, setSelectedModel] = useState("google/gemini-2.5-flash");
+  
+  const { 
+    transcript, 
+    isListening, 
+    wordCount, 
+    duration,
+    startListening, 
+    stopListening, 
+    resetTranscript 
+  } = useSpeechRecognition();
 
   useEffect(() => {
     setQuestion(getRandomQuestion());
@@ -151,8 +157,8 @@ const CommonInterview = () => {
     setFeedback("");
     setScore(null);
     setFollowUpChain([]);
-    setRecordedAudioBlob(null);
     setAudioScores(null);
+    resetTranscript();
   };
 
   const handleSubmitFollowUp = async (followUpAnswer: string, parentQuestion: string) => {
@@ -251,65 +257,23 @@ const CommonInterview = () => {
     }
   };
 
-  const toggleRecording = async () => {
-    if (isRecording) {
-      // Stop recording
-      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-        mediaRecorder.stop();
-      }
-      setIsRecording(false);
-    } else {
-      // Start recording
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-        const chunks: Blob[] = [];
-
-        recorder.ondataavailable = (e) => {
-          if (e.data.size > 0) {
-            chunks.push(e.data);
-          }
-        };
-
-        recorder.onstop = async () => {
-          const audioBlob = new Blob(chunks, { type: 'audio/webm' });
-          setAudioChunks([audioBlob]);
-          setRecordedAudioBlob(audioBlob);
-          
-          // Convert to base64 and submit
-          const reader = new FileReader();
-          reader.readAsDataURL(audioBlob);
-          reader.onloadend = async () => {
-            const base64Audio = reader.result?.toString().split(',')[1];
-            if (base64Audio) {
-              await handleSubmitAudio(base64Audio);
-            }
-          };
-
-          // Stop all tracks
-          stream.getTracks().forEach(track => track.stop());
-        };
-
-        recorder.start();
-        setMediaRecorder(recorder);
-        setIsRecording(true);
-        toast.success('음성 녹음을 시작합니다.');
-      } catch (error) {
-        console.error('Error accessing microphone:', error);
-        toast.error('마이크 접근 권한이 필요합니다.');
-      }
+  const handleVoiceAnswer = async () => {
+    if (!transcript.trim()) {
+      toast.error('음성 인식 결과가 없습니다.');
+      return;
     }
-  };
 
-  const handleSubmitAudio = async (audioBase64: string) => {
     setLoading(true);
     setFeedback("");
     setScore(null);
-    
+    setAudioScores(null);
+
     try {
+      const wordsPerMinute = duration > 0 ? Math.round((wordCount / duration) * 60) : 0;
+
       const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/audio-analysis`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/interview-feedback`,
         {
           method: 'POST',
           headers: {
@@ -317,21 +281,26 @@ const CommonInterview = () => {
             'Authorization': `Bearer ${session?.access_token}`,
           },
           body: JSON.stringify({
-            audioBase64,
             question,
-            type: 'common'
+            answer: transcript,
+            type: 'common_audio',
+            model: selectedModel,
+            audioMetrics: {
+              wordsPerMinute,
+              wordCount,
+              duration: Math.round(duration)
+            }
           }),
         }
       );
 
-      if (!response.ok) throw new Error('Failed to get audio analysis');
+      if (!response.ok) throw new Error('Failed to get feedback');
       if (!response.body) throw new Error('No response body');
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let accumulatedText = '';
       let extractedScore: number | null = null;
-      let scores = { pronunciation: 0, speed: 0, fluency: 0, intonation: 0, delivery: 0 };
 
       while (true) {
         const { done, value } = await reader.read();
@@ -352,26 +321,27 @@ const CommonInterview = () => {
                 accumulatedText += content;
                 setFeedback(accumulatedText);
                 
-                // Extract individual scores
-                const pronunciationMatch = accumulatedText.match(/발음.*?(\d+)점/);
-                const speedMatch = accumulatedText.match(/속도.*?(\d+)점/);
-                const fluencyMatch = accumulatedText.match(/유창성.*?(\d+)점/);
-                const intonationMatch = accumulatedText.match(/억양.*?(\d+)점/);
-                const deliveryMatch = accumulatedText.match(/전달력.*?(\d+)점/);
-                
-                if (pronunciationMatch) scores.pronunciation = parseInt(pronunciationMatch[1]);
-                if (speedMatch) scores.speed = parseInt(speedMatch[1]);
-                if (fluencyMatch) scores.fluency = parseInt(fluencyMatch[1]);
-                if (intonationMatch) scores.intonation = parseInt(intonationMatch[1]);
-                if (deliveryMatch) scores.delivery = parseInt(deliveryMatch[1]);
-                
-                setAudioScores(scores);
-                
-                // Try to extract total score
                 const scoreMatch = accumulatedText.match(/총점\s*(\d+)점/);
                 if (scoreMatch && !extractedScore) {
                   extractedScore = parseInt(scoreMatch[1]);
                   setScore(extractedScore);
+                }
+
+                // Extract individual scores
+                const pronunciationMatch = accumulatedText.match(/발음[^\d]*(\d+)점/);
+                const speedMatch = accumulatedText.match(/속도[^\d]*(\d+)점/);
+                const fluencyMatch = accumulatedText.match(/유창성[^\d]*(\d+)점/);
+                const intonationMatch = accumulatedText.match(/억양[^\d]*(\d+)점/);
+                const deliveryMatch = accumulatedText.match(/전달[^\d]*(\d+)점/);
+
+                if (pronunciationMatch && speedMatch && fluencyMatch && intonationMatch && deliveryMatch) {
+                  setAudioScores({
+                    pronunciation: parseInt(pronunciationMatch[1]),
+                    speed: parseInt(speedMatch[1]),
+                    fluency: parseInt(fluencyMatch[1]),
+                    intonation: parseInt(intonationMatch[1]),
+                    delivery: parseInt(deliveryMatch[1])
+                  });
                 }
               }
             } catch (e) {
@@ -381,25 +351,16 @@ const CommonInterview = () => {
         }
       }
 
-      // Final score extraction
-      if (!extractedScore) {
-        const scoreMatch = accumulatedText.match(/총점\s*(\d+)점/);
-        if (scoreMatch) {
-          extractedScore = parseInt(scoreMatch[1]);
-          setScore(extractedScore);
-        }
-      }
-      
-      // Save session
+      // Save to database
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
+      if (user && accumulatedText) {
         const { data: sessionData, error: saveError } = await supabase
           .from('interview_sessions')
           .insert({
             user_id: user.id,
             session_type: 'common',
             question,
-            answer: '음성 답변',
+            answer: transcript,
             ai_feedback: accumulatedText,
             score: extractedScore
           })
@@ -420,7 +381,7 @@ const CommonInterview = () => {
         }
       }
     } catch (error: any) {
-      console.error('Audio analysis error:', error);
+      console.error('Voice analysis error:', error);
       toast.error('음성 분석에 실패했습니다.');
     } finally {
       setLoading(false);
@@ -543,15 +504,6 @@ const CommonInterview = () => {
     }
   };
 
-  const playRecordedAudio = async () => {
-    if (!recordedAudioBlob) return;
-    
-    const audio = new Audio(URL.createObjectURL(recordedAudioBlob));
-    audio.onended = () => setIsPlayingAudio(false);
-    setIsPlayingAudio(true);
-    audio.play();
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/5">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -586,14 +538,15 @@ const CommonInterview = () => {
               <div className="space-y-4">
                 <div className="flex gap-2">
                   <Button
-                    variant={isRecording ? "destructive" : "default"}
-                    onClick={toggleRecording}
+                    variant={isListening ? "destructive" : "default"}
+                    onClick={isListening ? stopListening : startListening}
                     className="flex-1"
+                    disabled={loading}
                   >
-                    {isRecording ? (
+                    {isListening ? (
                       <>
-                        <MicOff className="h-4 w-4 mr-2" />
-                        녹음 중지
+                        <Square className="h-4 w-4 mr-2" />
+                        음성 인식 중지
                       </>
                     ) : (
                       <>
@@ -602,20 +555,42 @@ const CommonInterview = () => {
                       </>
                     )}
                   </Button>
+                  {transcript && (
+                    <Button
+                      onClick={handleVoiceAnswer}
+                      disabled={loading}
+                      className="flex-1"
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      음성 답변 제출
+                    </Button>
+                  )}
                 </div>
 
+                {transcript && (
+                  <div className="p-4 bg-muted rounded-lg space-y-2">
+                    <p className="text-sm font-medium text-primary">인식된 내용:</p>
+                    <p className="text-sm">{transcript}</p>
+                    <div className="flex gap-4 text-xs text-muted-foreground">
+                      <span>단어 수: {wordCount}</span>
+                      <span>속도: {duration > 0 ? Math.round((wordCount / duration) * 60) : 0} 단어/분</span>
+                      <span>소요 시간: {Math.round(duration)}초</span>
+                    </div>
+                  </div>
+                )}
+
                 <Textarea
-                  placeholder="여기에 답변을 입력하세요..."
+                  placeholder="또는 여기에 답변을 입력하세요..."
                   value={answer}
                   onChange={(e) => setAnswer(e.target.value)}
                   rows={8}
                   className="resize-none"
                 />
                 
-                {isRecording && (
-                  <div className="flex items-center gap-2 text-destructive animate-pulse">
-                    <div className="h-3 w-3 rounded-full bg-destructive" />
-                    <span className="text-sm font-medium">녹음 중... (답변이 끝나면 다시 클릭하세요)</span>
+                {isListening && (
+                  <div className="flex items-center gap-2 text-primary animate-pulse">
+                    <div className="h-3 w-3 rounded-full bg-primary" />
+                    <span className="text-sm font-medium">음성 인식 중... (답변이 끝나면 중지를 클릭하세요)</span>
                   </div>
                 )}
 
@@ -629,7 +604,7 @@ const CommonInterview = () => {
                   ) : (
                     <>
                       <Send className="h-4 w-4 mr-2" />
-                      AI 피드백 받기
+                      텍스트 답변 제출
                     </>
                   )}
                 </Button>
@@ -642,23 +617,11 @@ const CommonInterview = () => {
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle className="text-primary">AI 피드백</CardTitle>
-                  <div className="flex items-center gap-2">
-                    {recordedAudioBlob && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={playRecordedAudio}
-                        disabled={isPlayingAudio}
-                      >
-                        {isPlayingAudio ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                      </Button>
-                    )}
-                    {score !== null && (
-                      <div className="text-2xl font-bold text-accent">
-                        {score}점 / 100점
-                      </div>
-                    )}
-                  </div>
+                  {score !== null && (
+                    <div className="text-2xl font-bold text-accent">
+                      {score}점 / 100점
+                    </div>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
