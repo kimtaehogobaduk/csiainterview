@@ -37,19 +37,18 @@ const Leaderboard = () => {
         .select(`
           user_id,
           total_mileage,
-          rank,
           profiles!inner(full_name, email)
         `)
         .eq('month', month)
-        .order('rank', { ascending: true })
+        .order('total_mileage', { ascending: false })
         .limit(10);
 
       if (error) throw error;
 
-      const formattedData = data.map(entry => ({
+      const formattedData = data.map((entry, index) => ({
         user_id: entry.user_id,
         total_mileage: entry.total_mileage,
-        rank: entry.rank || 0,
+        rank: index + 1,
         full_name: (entry.profiles as any).full_name || '익명',
         email: (entry.profiles as any).email || ''
       }));
