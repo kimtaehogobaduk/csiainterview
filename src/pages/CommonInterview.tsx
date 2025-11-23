@@ -249,7 +249,35 @@ const CommonInterview = () => {
         }
       }
 
-      toast.success('피드백을 받았습니다!');
+      // Save session and award mileage
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && accumulatedText) {
+        const { data: sessionData, error: saveError } = await supabase
+          .from('interview_sessions')
+          .insert({
+            user_id: user.id,
+            session_type: 'common',
+            question: parentQuestion,
+            answer: followUpAnswer,
+            ai_feedback: accumulatedText,
+            score: extractedScore
+          })
+          .select('id')
+          .single();
+
+        if (!saveError && extractedScore && sessionData) {
+          const mileageAmount = extractedScore + 20;
+          await supabase.rpc('award_mileage', {
+            p_user_id: user.id,
+            p_amount: mileageAmount,
+            p_reason: '공통 면접 추가 질문 완료',
+            p_session_id: sessionData.id
+          });
+          toast.success(`피드백을 받았습니다! +${mileageAmount} 마일리지`);
+        } else {
+          toast.success('피드백을 받았습니다!');
+        }
+      }
     } catch (error: any) {
       toast.error('피드백을 가져오는데 실패했습니다.');
     } finally {
