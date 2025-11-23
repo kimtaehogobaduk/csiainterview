@@ -42,23 +42,23 @@ export const useSpeechRecognition = (): UseSpeechRecognitionReturn => {
 
     recognition.onresult = (event: any) => {
       let interimTranscript = '';
-      let finalTranscript = '';
-
-      for (let i = event.resultIndex; i < event.results.length; i++) {
+      
+      // 전체 결과를 다시 구성하여 중복 방지
+      fullTranscript = '';
+      for (let i = 0; i < event.results.length; i++) {
         const transcriptPart = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          finalTranscript += transcriptPart + ' ';
+          fullTranscript += transcriptPart + ' ';
         } else {
           interimTranscript += transcriptPart;
         }
       }
 
-      if (finalTranscript) {
-        fullTranscript += finalTranscript;
-        const words = fullTranscript.trim().split(/\s+/).filter(w => w.length > 0);
-        setWordCount(words.length);
-      }
+      // 단어 수 계산
+      const words = fullTranscript.trim().split(/\s+/).filter(w => w.length > 0);
+      setWordCount(words.length);
 
+      // 최종 + 임시 텍스트 표시
       setTranscript(fullTranscript + interimTranscript);
       
       const elapsed = (Date.now() - startTimeRef.current) / 1000;
