@@ -18,8 +18,6 @@ export const useSpeechRecognition = (): UseSpeechRecognitionReturn => {
   const [duration, setDuration] = useState(0);
   const recognitionRef = useRef<any>(null);
   const startTimeRef = useRef<number>(0);
-  const finalTranscriptRef = useRef<string>('');
-  const shouldRestartRef = useRef<boolean>(false);
 
   const startListening = useCallback(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -30,80 +28,53 @@ export const useSpeechRecognition = (): UseSpeechRecognitionReturn => {
     }
 
     const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
+    recognition.continuous = false; // 한 번의 발화만 인식
+    recognition.interimResults = false; // 중간 결과는 사용하지 않음
     recognition.lang = 'ko-KR';
 
-    if (startTimeRef.current === 0) {
-      startTimeRef.current = Date.now();
-      finalTranscriptRef.current = '';
-    }
-    
-    shouldRestartRef.current = true;
+    startTimeRef.current = Date.now();
+    setTranscript('');
+    setWordCount(0);
+    setDuration(0);
 
     recognition.onstart = () => {
       setIsListening(true);
-      if (finalTranscriptRef.current === '') {
-        toast.success('음성 인식을 시작합니다. 편안하게 말씀해주세요.');
-      }
+      toast.success('음성 인식을 시작합니다. 말을 다 하신 뒤 잠시 기다려주세요.');
     };
 
     recognition.onresult = (event: any) => {
-      let interimTranscript = '';
       let finalTranscript = '';
-      
-      // 최종 확정된 결과만 누적
+
       for (let i = 0; i < event.results.length; i++) {
-        const transcriptPart = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscript += transcriptPart + ' ';
-        } else {
-          interimTranscript += transcriptPart;
+        const result = event.results[i];
+        if (result.isFinal) {
+          finalTranscript += result[0].transcript + ' ';
         }
       }
 
-      // 최종 확정된 텍스트가 있으면 ref에 추가
-      if (finalTranscript) {
-        finalTranscriptRef.current += finalTranscript;
-      }
+      finalTranscript = finalTranscript.trim();
+      setTranscript(finalTranscript);
 
-      // 단어 수 계산
-      const words = finalTranscriptRef.current.trim().split(/\s+/).filter(w => w.length > 0);
+      const words = finalTranscript.split(/\s+/).filter(w => w.length > 0);
       setWordCount(words.length);
 
-      // 최종 + 임시 텍스트 표시
-      setTranscript(finalTranscriptRef.current + interimTranscript);
-      
       const elapsed = (Date.now() - startTimeRef.current) / 1000;
       setDuration(elapsed);
     };
 
     recognition.onerror = (event: any) => {
       console.error('Speech recognition error:', event.error);
+      setIsListening(false);
       if (event.error === 'no-speech') {
-        // no-speech 에러는 자동 재시작으로 처리
-        return;
+        toast.error('음성이 감지되지 않았습니다. 다시 시도해주세요.');
       } else if (event.error === 'not-allowed') {
         toast.error('마이크 접근 권한이 필요합니다.');
-        shouldRestartRef.current = false;
-      } else if (event.error === 'aborted') {
-        // 사용자가 명시적으로 중지한 경우
-        shouldRestartRef.current = false;
       }
     };
 
     recognition.onend = () => {
-      // 사용자가 명시적으로 중지하지 않았다면 자동으로 재시작
-      if (shouldRestartRef.current && recognitionRef.current) {
-        try {
-          recognition.start();
-        } catch (e) {
-          console.error('Recognition restart failed:', e);
-          setIsListening(false);
-        }
-      } else {
-        setIsListening(false);
-      }
+      setIsListening(false);
+      recognitionRef.current = null;
     };
 
     recognition.start();
@@ -111,7 +82,6 @@ export const useSpeechRecognition = (): UseSpeechRecognitionReturn => {
   }, []);
 
   const stopListening = useCallback(() => {
-    shouldRestartRef.current = false;
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
@@ -131,7 +101,6 @@ export const useSpeechRecognition = (): UseSpeechRecognitionReturn => {
     setWordCount(0);
     setDuration(0);
     startTimeRef.current = 0;
-    finalTranscriptRef.current = '';
   }, []);
 
   return {
