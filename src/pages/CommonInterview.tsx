@@ -12,6 +12,7 @@ import FormattedFeedback from "@/components/FormattedFeedback";
 import AudioAnalysisChart from "@/components/AudioAnalysisChart";
 import VideoPreview from "@/components/VideoPreview";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import { AudioVisualizer } from "@/components/AudioVisualizer";
 
 interface FollowUpItem {
   question: string;
@@ -588,9 +589,12 @@ const CommonInterview = () => {
                 />
                 
                 {isListening && (
-                  <div className="flex items-center gap-2 text-primary animate-pulse">
-                    <div className="h-3 w-3 rounded-full bg-primary" />
-                    <span className="text-sm font-medium">음성 인식 중... (답변이 끝나면 중지를 클릭하세요)</span>
+                  <div className="space-y-3">
+                    <AudioVisualizer isActive={isListening} />
+                    <div className="flex items-center gap-2 text-primary animate-pulse">
+                      <div className="h-3 w-3 rounded-full bg-primary" />
+                      <span className="text-sm font-medium">음성 인식 중... (답변이 끝나면 중지를 클릭하세요)</span>
+                    </div>
                   </div>
                 )}
 
