@@ -9,10 +9,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, User, FileText, MessageSquare, Save, Trash2, Video } from "lucide-react";
+import { ArrowLeft, User, FileText, MessageSquare, Save, Trash2, Video, Palette } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import Footer from "@/components/Footer";
 import ModelSelector from "@/components/ModelSelector";
+import ProfileCustomization from "@/components/ProfileCustomization";
 
 interface Profile {
   full_name: string;
@@ -193,10 +194,14 @@ const Profile = () => {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="profile">
               <User className="h-4 w-4 mr-2" />
               프로필
+            </TabsTrigger>
+            <TabsTrigger value="customization">
+              <Palette className="h-4 w-4 mr-2" />
+              꾸미기
             </TabsTrigger>
             <TabsTrigger value="essays">
               <FileText className="h-4 w-4 mr-2" />
@@ -312,6 +317,10 @@ const Profile = () => {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="customization" className="space-y-6">
+            <ProfileCustomization />
           </TabsContent>
 
           <TabsContent value="essays" className="space-y-4">
