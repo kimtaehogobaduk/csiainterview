@@ -162,6 +162,7 @@ export type Database = {
           score: number | null
           session_type: string
           user_id: string
+          video_url: string | null
         }
         Insert: {
           ai_feedback?: string | null
@@ -172,6 +173,7 @@ export type Database = {
           score?: number | null
           session_type: string
           user_id: string
+          video_url?: string | null
         }
         Update: {
           ai_feedback?: string | null
@@ -182,6 +184,7 @@ export type Database = {
           score?: number | null
           session_type?: string
           user_id?: string
+          video_url?: string | null
         }
         Relationships: []
       }
