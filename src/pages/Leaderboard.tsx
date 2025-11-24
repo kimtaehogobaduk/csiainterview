@@ -261,13 +261,8 @@ const Leaderboard = () => {
                         </span>
                         <div className="flex-1 min-w-0">
                           <h3 className="text-xl font-bold truncate" style={entry.theme_color ? { color: entry.theme_color } : undefined}>
-                            {entry.full_name || entry.email}
+                            {entry.full_name || '익명'}
                           </h3>
-                          {entry.full_name && (
-                            <p className="text-sm text-muted-foreground truncate">
-                              {entry.email}
-                            </p>
-                          )}
                         </div>
                       </div>
                     </div>
