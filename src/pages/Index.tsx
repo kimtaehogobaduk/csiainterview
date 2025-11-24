@@ -8,24 +8,28 @@ import type { User as SupabaseUser } from "@supabase/supabase-js";
 import Footer from "@/components/Footer";
 import logoImage from "@/assets/logo.jpg";
 import { toast } from "sonner";
-
 const Index = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-
   useEffect(() => {
     const initAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: {
+          session
+        }
+      } = await supabase.auth.getSession();
       setUser(session?.user || null);
       if (session?.user) {
         await checkAdmin(session.user.id);
       }
     };
-
     initAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const {
+      data: {
+        subscription
+      }
+    } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Auth state changed:', event, session?.user?.email);
       setUser(session?.user || null);
       if (session?.user) {
@@ -36,10 +40,8 @@ const Index = () => {
         setIsAdmin(false);
       }
     });
-
     return () => subscription.unsubscribe();
   }, []);
-
   const checkAdmin = async (userId: string) => {
     try {
       // Check if localStorage is accessible
@@ -51,41 +53,39 @@ const Index = () => {
         setIsAdmin(false);
         return;
       }
-
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .eq("role", "admin")
-        .maybeSingle();
-      
+      const {
+        data,
+        error
+      } = await supabase.from("user_roles").select("role").eq("user_id", userId).eq("role", "admin").maybeSingle();
       if (error) {
         console.error('Admin check error:', error);
         setIsAdmin(false);
         return;
       }
-      
       const isAdminUser = !!data;
-      console.log('Admin check result:', { userId, isAdmin: isAdminUser, data });
+      console.log('Admin check result:', {
+        userId,
+        isAdmin: isAdminUser,
+        data
+      });
       setIsAdmin(isAdminUser);
     } catch (error) {
       console.error('Admin check exception:', error);
       setIsAdmin(false);
     }
   };
-
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
   };
-
   if (!user) {
-    return (
-      <div className="min-h-screen bg-background relative overflow-hidden">
+    return <div className="min-h-screen bg-background relative overflow-hidden">
         {/* Animated background elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl animate-float" />
-          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent/5 rounded-full blur-3xl animate-float" style={{ animationDelay: '1s' }} />
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent/5 rounded-full blur-3xl animate-float" style={{
+          animationDelay: '1s'
+        }} />
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-secondary/3 rounded-full blur-3xl animate-pulse" />
         </div>
 
@@ -101,7 +101,9 @@ const Index = () => {
               </div>
             </div>
 
-            <div className="space-y-6 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+            <div className="space-y-6 animate-slide-up" style={{
+            animationDelay: '0.2s'
+          }}>
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium">
                 <Sparkles className="h-4 w-4" />
                 AI 기반 면접 준비 플랫폼
@@ -123,12 +125,10 @@ const Index = () => {
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-              <Button 
-                size="lg" 
-                onClick={() => navigate("/auth")}
-                className="text-lg px-12 py-8 h-auto font-bold shadow-strong hover:shadow-intense transition-all group"
-              >
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in-up" style={{
+            animationDelay: '0.4s'
+          }}>
+              <Button size="lg" onClick={() => navigate("/auth")} className="text-lg px-12 py-8 h-auto font-bold shadow-strong hover:shadow-intense transition-all group">
                 무료로 시작하기
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
@@ -137,7 +137,9 @@ const Index = () => {
 
           {/* Features Grid */}
           <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-20">
-            <div className="group p-8 rounded-2xl bg-card/50 backdrop-blur-sm border-2 border-border/50 hover:border-primary/30 transition-all duration-500 hover:-translate-y-2 hover:shadow-strong animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+            <div className="group p-8 rounded-2xl bg-card/50 backdrop-blur-sm border-2 border-border/50 hover:border-primary/30 transition-all duration-500 hover:-translate-y-2 hover:shadow-strong animate-fade-in-up" style={{
+            animationDelay: '0.5s'
+          }}>
               <div className="h-14 w-14 rounded-2xl bg-gradient-primary flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-soft">
                 <Target className="h-7 w-7 text-white" />
               </div>
@@ -147,7 +149,9 @@ const Index = () => {
               </p>
             </div>
 
-            <div className="group p-8 rounded-2xl bg-card/50 backdrop-blur-sm border-2 border-border/50 hover:border-accent/30 transition-all duration-500 hover:-translate-y-2 hover:shadow-strong animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+            <div className="group p-8 rounded-2xl bg-card/50 backdrop-blur-sm border-2 border-border/50 hover:border-accent/30 transition-all duration-500 hover:-translate-y-2 hover:shadow-strong animate-fade-in-up" style={{
+            animationDelay: '0.6s'
+          }}>
               <div className="h-14 w-14 rounded-2xl bg-gradient-accent flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-soft">
                 <Sparkles className="h-7 w-7 text-white" />
               </div>
@@ -157,7 +161,9 @@ const Index = () => {
               </p>
             </div>
 
-            <div className="group p-8 rounded-2xl bg-card/50 backdrop-blur-sm border-2 border-border/50 hover:border-secondary/30 transition-all duration-500 hover:-translate-y-2 hover:shadow-strong animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
+            <div className="group p-8 rounded-2xl bg-card/50 backdrop-blur-sm border-2 border-border/50 hover:border-secondary/30 transition-all duration-500 hover:-translate-y-2 hover:shadow-strong animate-fade-in-up" style={{
+            animationDelay: '0.7s'
+          }}>
               <div className="h-14 w-14 rounded-2xl bg-gradient-secondary flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-soft">
                 <TrendingUp className="h-7 w-7 text-white" />
               </div>
@@ -170,7 +176,9 @@ const Index = () => {
 
           {/* Main Features */}
           <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            <Card className="group hover:-translate-y-3 transition-all duration-500 hover:shadow-intense border-2 animate-slide-in-left" style={{ animationDelay: '0.8s' }}>
+            <Card className="group hover:-translate-y-3 transition-all duration-500 hover:shadow-intense border-2 animate-slide-in-left" style={{
+            animationDelay: '0.8s'
+          }}>
               <CardHeader className="space-y-4">
                 <div className="p-4 rounded-2xl bg-gradient-primary w-fit shadow-soft group-hover:shadow-strong transition-shadow">
                   <MessageSquare className="h-10 w-10 text-white" />
@@ -213,7 +221,9 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            <Card className="group hover:-translate-y-3 transition-all duration-500 hover:shadow-intense border-2 animate-slide-in-left" style={{ animationDelay: '0.9s' }}>
+            <Card className="group hover:-translate-y-3 transition-all duration-500 hover:shadow-intense border-2 animate-slide-in-left" style={{
+            animationDelay: '0.9s'
+          }}>
               <CardHeader className="space-y-4">
                 <div className="p-4 rounded-2xl bg-gradient-accent w-fit shadow-soft group-hover:shadow-strong transition-shadow">
                   <FileText className="h-10 w-10 text-white" />
@@ -258,16 +268,15 @@ const Index = () => {
           </div>
         </div>
         <Footer />
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
+  return <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Animated background */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent/5 rounded-full blur-3xl animate-float" style={{ animationDelay: '1s' }} />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent/5 rounded-full blur-3xl animate-float" style={{
+        animationDelay: '1s'
+      }} />
       </div>
 
       <header className="border-b border-border/50 bg-card/80 backdrop-blur-xl sticky top-0 z-50 shadow-sm">
@@ -281,51 +290,25 @@ const Index = () => {
                 <h1 className="text-2xl font-bold bg-gradient-hero bg-clip-text text-transparent">
                   합격의 길
                 </h1>
-                <p className="text-xs text-muted-foreground">AI Interview Platform</p>
+                <p className="text-xs text-muted-foreground">특목고 입시 준비 프로그렘​  </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                onClick={() => navigate("/profile")} 
-                className="hover:bg-primary/10 transition-all"
-              >
+              <Button variant="ghost" onClick={() => navigate("/profile")} className="hover:bg-primary/10 transition-all">
                 <User className="h-5 w-5 mr-2" />
                 내 정보
               </Button>
-              <Button 
-                variant="ghost" 
-                size="icon"
-                onClick={() => navigate("/shop")} 
-                className="hover:bg-primary/10 transition-all"
-                title="상점"
-              >
+              <Button variant="ghost" size="icon" onClick={() => navigate("/shop")} className="hover:bg-primary/10 transition-all" title="상점">
                 <ShoppingBag className="h-5 w-5" />
               </Button>
-              <Button 
-                variant="ghost" 
-                size="icon"
-                onClick={() => navigate("/leaderboard")} 
-                className="hover:bg-primary/10 transition-all"
-                title="리더보드"
-              >
+              <Button variant="ghost" size="icon" onClick={() => navigate("/leaderboard")} className="hover:bg-primary/10 transition-all" title="리더보드">
                 <Trophy className="h-5 w-5" />
               </Button>
-              {isAdmin && (
-                <Button 
-                  variant="ghost" 
-                  onClick={() => navigate("/admin")} 
-                  className="hover:bg-accent/10 transition-all"
-                >
+              {isAdmin && <Button variant="ghost" onClick={() => navigate("/admin")} className="hover:bg-accent/10 transition-all">
                   <Shield className="h-5 w-5 mr-2" />
                   관리자
-                </Button>
-              )}
-              <Button 
-                variant="ghost" 
-                onClick={handleLogout} 
-                className="hover:bg-destructive/10 text-destructive transition-all"
-              >
+                </Button>}
+              <Button variant="ghost" onClick={handleLogout} className="hover:bg-destructive/10 text-destructive transition-all">
                 <LogOut className="h-5 w-5 mr-2" />
                 로그아웃
               </Button>
@@ -352,11 +335,9 @@ const Index = () => {
 
           {/* Main Cards */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          <Card 
-            className="group hover:-translate-y-4 cursor-pointer transition-all duration-500 hover:shadow-intense border-2 hover:border-primary/30 animate-fade-in-up"
-            onClick={() => navigate("/common-interview")}
-            style={{ animationDelay: '0.1s' }}
-          >
+          <Card className="group hover:-translate-y-4 cursor-pointer transition-all duration-500 hover:shadow-intense border-2 hover:border-primary/30 animate-fade-in-up" onClick={() => navigate("/common-interview")} style={{
+            animationDelay: '0.1s'
+          }}>
             <CardHeader className="space-y-4">
               <div className="p-4 rounded-2xl bg-gradient-primary w-fit shadow-soft group-hover:shadow-strong group-hover:scale-110 transition-all duration-500">
                 <MessageSquare className="h-10 w-10 text-white" />
@@ -377,11 +358,9 @@ const Index = () => {
             </CardContent>
           </Card>
 
-          <Card 
-            className="group hover:-translate-y-4 cursor-pointer transition-all duration-500 hover:shadow-intense border-2 hover:border-accent/30 animate-fade-in-up"
-            onClick={() => navigate("/essay-interview")}
-            style={{ animationDelay: '0.2s' }}
-          >
+          <Card className="group hover:-translate-y-4 cursor-pointer transition-all duration-500 hover:shadow-intense border-2 hover:border-accent/30 animate-fade-in-up" onClick={() => navigate("/essay-interview")} style={{
+            animationDelay: '0.2s'
+          }}>
             <CardHeader className="space-y-4">
               <div className="p-4 rounded-2xl bg-gradient-accent w-fit shadow-soft group-hover:shadow-strong group-hover:scale-110 transition-all duration-500">
                 <FileText className="h-10 w-10 text-white" />
@@ -402,11 +381,9 @@ const Index = () => {
             </CardContent>
           </Card>
 
-          <Card 
-            className="group hover:-translate-y-4 cursor-pointer transition-all duration-500 hover:shadow-intense border-2 hover:border-secondary/30 animate-fade-in-up"
-            onClick={() => navigate("/community")}
-            style={{ animationDelay: '0.3s' }}
-          >
+          <Card className="group hover:-translate-y-4 cursor-pointer transition-all duration-500 hover:shadow-intense border-2 hover:border-secondary/30 animate-fade-in-up" onClick={() => navigate("/community")} style={{
+            animationDelay: '0.3s'
+          }}>
             <CardHeader className="space-y-4">
               <div className="p-4 rounded-2xl bg-gradient-secondary w-fit shadow-soft group-hover:shadow-strong group-hover:scale-110 transition-all duration-500">
                 <Users className="h-10 w-10 text-white" />
@@ -430,8 +407,6 @@ const Index = () => {
         </div>
       </div>
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
