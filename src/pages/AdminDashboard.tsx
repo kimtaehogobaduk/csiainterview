@@ -345,17 +345,16 @@ const AdminDashboard = () => {
     }
 
     try {
-      console.log('Calling award_mileage with:', {
+      console.log('Calling admin_adjust_mileage with:', {
         p_user_id: selectedUserForMileage.id,
         p_amount: amount,
         p_reason: mileageReason
       });
 
-      const { data, error } = await supabase.rpc('award_mileage', {
+      const { data, error } = await supabase.rpc('admin_adjust_mileage', {
         p_user_id: selectedUserForMileage.id,
         p_amount: amount,
         p_reason: mileageReason,
-        p_session_id: null
       });
 
       if (error) {
@@ -363,7 +362,7 @@ const AdminDashboard = () => {
         throw error;
       }
 
-      console.log('Mileage awarded successfully:', data);
+      console.log('Mileage adjusted successfully:', data);
       toast.success(`마일리지가 ${amount > 0 ? '지급' : '차감'}되었습니다.`);
       setSelectedUserForMileage(null);
       setMileageAmount("");
