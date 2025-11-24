@@ -52,6 +52,11 @@ interface AdminMessage {
   created_at: string | null;
 }
 
+interface MessageToEdit {
+  id: string;
+  message: string;
+}
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -74,6 +79,8 @@ const AdminDashboard = () => {
   const [selectedUserForMileage, setSelectedUserForMileage] = useState<Profile | null>(null);
   const [mileageAmount, setMileageAmount] = useState<string>("");
   const [mileageReason, setMileageReason] = useState<string>("");
+  const [editingMessage, setEditingMessage] = useState<MessageToEdit | null>(null);
+  const [editedMessageContent, setEditedMessageContent] = useState("");
 
   useEffect(() => {
     checkAuth();
@@ -329,6 +336,47 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error("Role change error:", error);
       toast.error("역할 변경 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    try {
+      const { error } = await supabase
+        .from("admin_messages")
+        .delete()
+        .eq("id", messageId);
+
+      if (error) throw error;
+
+      toast.success("메시지가 삭제되었습니다.");
+      loadAllData();
+    } catch (error) {
+      console.error("Delete message error:", error);
+      toast.error("메시지 삭제 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleEditMessage = async () => {
+    if (!editingMessage || !editedMessageContent.trim()) {
+      toast.error("메시지 내용을 입력해주세요.");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("admin_messages")
+        .update({ message: editedMessageContent })
+        .eq("id", editingMessage.id);
+
+      if (error) throw error;
+
+      toast.success("메시지가 수정되었습니다.");
+      setEditingMessage(null);
+      setEditedMessageContent("");
+      loadAllData();
+    } catch (error) {
+      console.error("Edit message error:", error);
+      toast.error("메시지 수정 중 오류가 발생했습니다.");
     }
   };
 
@@ -973,61 +1021,114 @@ const AdminDashboard = () => {
                               {message.is_from_admin ? "관리자" : "사용자"}
                             </Badge>
                           </div>
-                          {!message.is_from_admin && (
+                          <div className="flex gap-2">
+                            {!message.is_from_admin && (
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => setSelectedUserId(message.user_id)}
+                                  >
+                                    <Send className="h-4 w-4 mr-2" />
+                                    답변하기
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>관리자 답변</DialogTitle>
+                                    <DialogDescription>
+                                      {getUserEmail(message.user_id)}에게 답변을 보냅니다
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="space-y-4">
+                                    <div>
+                                      <Label htmlFor="original-message">원본 메시지</Label>
+                                      <Textarea
+                                        id="original-message"
+                                        value={message.message}
+                                        disabled
+                                        className="mt-2"
+                                      />
+                                    </div>
+                                    <div>
+                                      <Label htmlFor="reply-message">답변</Label>
+                                      <Textarea
+                                        id="reply-message"
+                                        value={replyMessage}
+                                        onChange={(e) => setReplyMessage(e.target.value)}
+                                        placeholder="답변을 입력하세요..."
+                                        className="mt-2 min-h-[120px]"
+                                      />
+                                    </div>
+                                    <div className="flex justify-end gap-2">
+                                      <Button variant="outline" onClick={() => {
+                                        setSelectedUserId(null);
+                                        setReplyMessage("");
+                                      }}>
+                                        취소
+                                      </Button>
+                                      <Button onClick={handleSendReply}>
+                                        <Send className="h-4 w-4 mr-2" />
+                                        전송
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                            )}
                             <Dialog>
                               <DialogTrigger asChild>
-                                <Button 
-                                  variant="outline" 
+                                <Button
+                                  variant="outline"
                                   size="sm"
-                                  onClick={() => setSelectedUserId(message.user_id)}
+                                  onClick={() => {
+                                    setEditingMessage({ id: message.id, message: message.message });
+                                    setEditedMessageContent(message.message);
+                                  }}
                                 >
-                                  <Send className="h-4 w-4 mr-2" />
-                                  답변하기
+                                  수정
                                 </Button>
                               </DialogTrigger>
                               <DialogContent>
                                 <DialogHeader>
-                                  <DialogTitle>관리자 답변</DialogTitle>
+                                  <DialogTitle>메시지 수정</DialogTitle>
                                   <DialogDescription>
-                                    {getUserEmail(message.user_id)}에게 답변을 보냅니다
+                                    메시지 내용을 수정합니다
                                   </DialogDescription>
                                 </DialogHeader>
                                 <div className="space-y-4">
                                   <div>
-                                    <Label htmlFor="original-message">원본 메시지</Label>
+                                    <Label htmlFor="edit-message">메시지 내용</Label>
                                     <Textarea
-                                      id="original-message"
-                                      value={message.message}
-                                      disabled
-                                      className="mt-2"
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label htmlFor="reply-message">답변</Label>
-                                    <Textarea
-                                      id="reply-message"
-                                      value={replyMessage}
-                                      onChange={(e) => setReplyMessage(e.target.value)}
-                                      placeholder="답변을 입력하세요..."
+                                      id="edit-message"
+                                      value={editedMessageContent}
+                                      onChange={(e) => setEditedMessageContent(e.target.value)}
                                       className="mt-2 min-h-[120px]"
                                     />
                                   </div>
                                   <div className="flex justify-end gap-2">
                                     <Button variant="outline" onClick={() => {
-                                      setSelectedUserId(null);
-                                      setReplyMessage("");
+                                      setEditingMessage(null);
+                                      setEditedMessageContent("");
                                     }}>
                                       취소
                                     </Button>
-                                    <Button onClick={handleSendReply}>
-                                      <Send className="h-4 w-4 mr-2" />
-                                      전송
+                                    <Button onClick={handleEditMessage}>
+                                      저장
                                     </Button>
                                   </div>
                                 </div>
                               </DialogContent>
                             </Dialog>
-                          )}
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDeleteMessage(message.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                         <CardDescription className="text-xs">
                           {formatDate(message.created_at)}
