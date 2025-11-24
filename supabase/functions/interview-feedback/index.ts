@@ -11,9 +11,14 @@ const requestSchema = z.object({
   question: z.string().trim().min(1).max(1000),
   answer: z.string().trim().min(1).max(10000),
   essay: z.string().trim().max(20000).optional(),
-  type: z.enum(['common', 'essay_based']),
+  type: z.enum(['common', 'essay_based', 'common_audio']),
   isFollowUp: z.boolean().optional(),
-  model: z.string().optional()
+  model: z.string().optional(),
+  audioMetrics: z.object({
+    wordsPerMinute: z.number().optional(),
+    wordCount: z.number().optional(),
+    duration: z.number().optional()
+  }).optional()
 });
 
 serve(async (req) => {
@@ -33,7 +38,7 @@ serve(async (req) => {
       );
     }
     
-    const { question, answer, essay, type, isFollowUp, model } = validationResult.data;
+    const { question, answer, essay, type, isFollowUp, model, audioMetrics } = validationResult.data;
 
     if (!question || !answer) {
       throw new Error('질문과 답변은 필수입니다.');
@@ -47,7 +52,7 @@ serve(async (req) => {
     let systemPrompt = '';
     let userPrompt = '';
 
-    if (type === 'common') {
+    if (type === 'common' || type === 'common_audio') {
       systemPrompt = `당신은 청심국제고등학교의 면접관입니다. 학생의 답변을 100점 만점으로 공정하고 균형있게 평가합니다.
 
 ${isFollowUp ? `이것은 추가 질문에 대한 답변입니다. 학생이 이전 피드백을 바탕으로 더 깊이 있는 답변을 할 수 있도록 새로운 추가 질문을 1개만 제시해주세요.` : ''}
@@ -95,6 +100,13 @@ ${isFollowUp ? '마지막으로 개선 방향을 제시하고 새로운 추가 �
       userPrompt = `질문: ${question}
 
 답변: ${answer}
+${type === 'common_audio' && audioMetrics ? `
+발표 지표:
+- 분당 단어 수: ${audioMetrics.wordsPerMinute || 'N/A'}
+- 총 단어 수: ${audioMetrics.wordCount || 'N/A'}
+- 발표 시간: ${audioMetrics.duration || 'N/A'}초
+
+발표 품질에 대한 평가도 포함해주세요.` : ''}
 
 이 답변에 대해 엄격하게 점수와 피드백 부탁드립니다.`;
     } else {
