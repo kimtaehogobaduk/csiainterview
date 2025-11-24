@@ -113,25 +113,13 @@ const AdminDashboard = () => {
 
       setUser(session.user);
 
-      // Check if user is admin
-      const { data: roleData, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", session.user.id)
-        .eq("role", "admin")
-        .maybeSingle();
+      // Check if user is admin using server-side verification
+      const { data: verifyData, error } = await supabase.functions.invoke('verify-admin');
 
-      console.log('AdminDashboard - Role check:', { roleData, error, userId: session.user.id });
+      console.log('AdminDashboard - Role check:', { verifyData, error, userId: session.user.id });
 
-      if (error) {
-        console.error('AdminDashboard - Role check error:', error);
-        toast.error("역할 확인 중 오류가 발생했습니다. 네트워크 연결을 확인해주세요.");
-        navigate("/");
-        return;
-      }
-
-      if (!roleData) {
-        console.log('AdminDashboard - User is not admin');
+      if (error || !verifyData?.isAdmin) {
+        console.error('AdminDashboard - Admin verification failed:', error);
         toast.error("관리자 권한이 없습니다.");
         navigate("/");
         return;
