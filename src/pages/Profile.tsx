@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, User, FileText, MessageSquare, Save, Trash2, Video, Palette } from "lucide-react";
+import { ArrowLeft, User, FileText, MessageSquare, Save, Trash2, Video, Palette, Trophy, TrendingUp } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import Footer from "@/components/Footer";
 import ModelSelector from "@/components/ModelSelector";
@@ -54,6 +54,8 @@ const Profile = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(false);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [leaderboardRank, setLeaderboardRank] = useState<number | null>(null);
+  const [totalUsers, setTotalUsers] = useState<number>(0);
 
   useEffect(() => {
     loadUserData();
@@ -67,7 +69,7 @@ const Profile = () => {
     }
 
     setUser(user);
-    await Promise.all([loadProfile(user.id), loadEssays(), loadSessions()]);
+    await Promise.all([loadProfile(user.id), loadEssays(), loadSessions(), loadLeaderboardRank(user.id)]);
   };
 
   const loadProfile = async (userId: string) => {
@@ -125,6 +127,32 @@ const Profile = () => {
 
     setSessions(data || []);
     setStatsLoading(false);
+  };
+
+  const loadLeaderboardRank = async (userId: string) => {
+    try {
+      const now = new Date();
+      const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+      // Get all leaderboard data for current month
+      const { data, error } = await supabase
+        .from('monthly_leaderboard')
+        .select('user_id, total_mileage')
+        .eq('month', month)
+        .order('total_mileage', { ascending: false });
+
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setTotalUsers(data.length);
+        const userRank = data.findIndex(entry => entry.user_id === userId);
+        if (userRank !== -1) {
+          setLeaderboardRank(userRank + 1);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading leaderboard rank:', error);
+    }
   };
 
   const handleUpdateProfile = async () => {
@@ -298,20 +326,46 @@ const Profile = () => {
                     <p className="text-center text-muted-foreground">로딩 중...</p>
                   ) : (
                     <div className="space-y-4">
-                  <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
-                    <span className="text-sm font-medium">총 마일리지</span>
-                    <span className="text-2xl font-bold text-primary">{profile.mileage?.toLocaleString() || 0}P</span>
-                  </div>
-                  <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
-                    <span className="text-sm font-medium">총 연습 횟수</span>
-                    <span className="text-2xl font-bold text-accent">{sessions.length}회</span>
-                  </div>
-                  <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
-                    <span className="text-sm font-medium">평균 점수</span>
-                    <span className="text-2xl font-bold text-secondary">
-                      {avgScore > 0 ? `${avgScore}점` : "-"}
-                    </span>
-                  </div>
+                      {leaderboardRank !== null && (
+                        <div className="flex justify-between items-center p-4 bg-gradient-to-r from-yellow-500/10 to-amber-500/10 rounded-lg border border-yellow-500/20">
+                          <div className="flex items-center gap-2">
+                            <Trophy className="h-5 w-5 text-yellow-600" />
+                            <span className="text-sm font-medium">리더보드 순위</span>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-2xl font-bold text-yellow-600">
+                              {leaderboardRank}위
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              / {totalUsers}명 중
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
+                        <span className="text-sm font-medium">총 마일리지</span>
+                        <span className="text-2xl font-bold text-primary">{profile.mileage?.toLocaleString() || 0}P</span>
+                      </div>
+                      <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
+                        <span className="text-sm font-medium">총 연습 횟수</span>
+                        <span className="text-2xl font-bold text-accent">{sessions.length}회</span>
+                      </div>
+                      <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
+                        <span className="text-sm font-medium">평균 점수</span>
+                        <span className="text-2xl font-bold text-secondary">
+                          {avgScore > 0 ? `${avgScore}점` : "-"}
+                        </span>
+                      </div>
+                      {leaderboardRank !== null && (
+                        <Button 
+                          variant="outline" 
+                          className="w-full" 
+                          onClick={() => navigate("/leaderboard")}
+                        >
+                          <TrendingUp className="h-4 w-4 mr-2" />
+                          전체 순위 보기
+                        </Button>
+                      )}
                     </div>
                   )}
                 </CardContent>
