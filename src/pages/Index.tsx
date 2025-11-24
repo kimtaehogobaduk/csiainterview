@@ -8,6 +8,7 @@ import type { User as SupabaseUser } from "@supabase/supabase-js";
 import Footer from "@/components/Footer";
 import logoImage from "@/assets/logo.jpg";
 import { toast } from "sonner";
+import UpdateAnnouncementDialog from "@/components/UpdateAnnouncementDialog";
 const Index = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -271,6 +272,8 @@ const Index = () => {
       </div>;
   }
   return <div className="min-h-screen bg-background relative overflow-hidden">
+      <UpdateAnnouncementDialog />
+      
       {/* Animated background */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl animate-float" />
