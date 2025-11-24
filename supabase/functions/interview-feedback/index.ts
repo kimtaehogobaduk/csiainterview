@@ -181,7 +181,32 @@ ${essay}
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ],
-      stream: true
+      stream: false,
+      tools: [{
+        type: 'function',
+        function: {
+          name: 'provide_interview_feedback',
+          description: '면접 답변에 대한 점수와 피드백을 제공합니다.',
+          parameters: {
+            type: 'object',
+            properties: {
+              score: {
+                type: 'number',
+                description: '0-100점 사이의 총점'
+              },
+              feedback: {
+                type: 'string',
+                description: '구체적인 피드백 내용 (좋았던 점, 부족했던 점, 개선 방향, 추가 질문 포함)'
+              }
+            },
+            required: ['score', 'feedback']
+          }
+        }
+      }],
+      tool_choice: {
+        type: 'function',
+        function: { name: 'provide_interview_feedback' }
+      }
     };
 
     // Only add temperature for models that support it
@@ -204,8 +229,45 @@ ${essay}
       throw new Error(`AI API 오류: ${response.status}`);
     }
 
-    // Return streaming response
-    return new Response(response.body, {
+    const data = await response.json();
+    console.log('AI response:', JSON.stringify(data, null, 2));
+
+    // Extract structured output from tool call
+    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+    if (!toolCall) {
+      throw new Error('AI가 구조화된 응답을 반환하지 않았습니다.');
+    }
+
+    const result = JSON.parse(toolCall.function.arguments);
+    const { score, feedback } = result;
+
+    // Validate score
+    if (typeof score !== 'number' || score < 0 || score > 100) {
+      throw new Error(`유효하지 않은 점수: ${score}`);
+    }
+
+    // Reconstruct as formatted text
+    const fullText = `총점 ${score}점\n\n${feedback}`;
+    console.log('Formatted feedback:', fullText);
+
+    // Return as SSE stream for client compatibility
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        const chunk = {
+          id: 'gen-' + Date.now(),
+          choices: [{
+            delta: { content: fullText },
+            finish_reason: 'stop'
+          }]
+        };
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`));
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+        controller.close();
+      }
+    });
+
+    return new Response(stream, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/event-stream',
