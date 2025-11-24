@@ -56,16 +56,15 @@ const Index = () => {
         setIsAdmin(false);
         return;
       }
-      const {
-        data,
-        error
-      } = await supabase.from("user_roles").select("role").eq("user_id", userId).eq("role", "admin").maybeSingle();
+      const { data, error } = await supabase.functions.invoke('verify-admin');
+      
       if (error) {
-        console.error('Admin check error:', error);
+        console.error('Admin verification error:', error);
         setIsAdmin(false);
         return;
       }
-      const isAdminUser = !!data;
+      
+      const isAdminUser = !!data?.isAdmin;
       console.log('Admin check result:', {
         userId,
         isAdmin: isAdminUser,

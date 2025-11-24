@@ -74,16 +74,24 @@ const Community = () => {
 
     setUser(session.user);
 
+    // Check admin status using server-side verification
+    try {
+      const { data: adminData } = await supabase.functions.invoke('verify-admin');
+      setIsAdmin(!!adminData?.isAdmin);
+    } catch (error) {
+      console.error('Admin verification error:', error);
+      setIsAdmin(false);
+    }
+
+    // Check elder role
     const { data: roles } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", session.user.id)
-      .in("role", ["admin", "elder"]);
+      .eq("role", "elder")
+      .maybeSingle();
 
-    if (roles) {
-      setIsAdmin(roles.some(r => r.role === "admin"));
-      setIsElder(roles.some(r => r.role === "elder"));
-    }
+    setIsElder(!!roles);
   };
 
   const loadPosts = async () => {
