@@ -18,7 +18,8 @@ const requestSchema = z.object({
     wordsPerMinute: z.number().optional(),
     wordCount: z.number().optional(),
     duration: z.number().optional()
-  }).optional()
+  }).optional(),
+  videoFrame: z.string().optional()
 });
 
 serve(async (req) => {
@@ -38,7 +39,7 @@ serve(async (req) => {
       );
     }
     
-    const { question, answer, essay, type, isFollowUp, model, audioMetrics } = validationResult.data;
+    const { question, answer, essay, type, isFollowUp, model, audioMetrics, videoFrame } = validationResult.data;
 
     if (!question || !answer) {
       throw new Error('질문과 답변은 필수입니다.');
@@ -56,6 +57,8 @@ serve(async (req) => {
       systemPrompt = `당신은 청심국제고등학교의 면접관입니다. 학생의 답변을 100점 만점으로 공정하고 균형있게 평가합니다.
 
 ${isFollowUp ? `이것은 추가 질문에 대한 답변입니다. 학생이 이전 피드백을 바탕으로 더 깊이 있는 답변을 할 수 있도록 새로운 추가 질문을 1개만 제시해주세요.` : ''}
+
+${videoFrame ? `비디오 분석도 포함되어 있습니다. 학생의 표정, 자세, 제스처, 눈 맞춤 등 비언어적 요소를 평가하여 추가 점수를 부여하세요.` : ''}
 
 평가 기준:
 1. 내용의 구체성과 진정성 (0-40점)
@@ -77,6 +80,16 @@ ${isFollowUp ? `이것은 추가 질문에 대한 답변입니다. 학생이 이
    - 자기 성찰과 발전 의지가 보임: 14-17점
    - 깊은 통찰과 명확한 성장 방향이 있음: 18-20점
 
+${videoFrame ? `
+4. 비언어적 커뮤니케이션 (0-10점 가산점)
+   - 표정: 자연스럽고 밝은 표정 유지 (0-3점)
+   - 자세: 바른 자세와 자신감 있는 태도 (0-3점)
+   - 제스처: 적절한 손동작과 몸짓 사용 (0-2점)
+   - 눈 맞춤: 카메라를 향한 자연스러운 시선 (0-2점)
+
+※ 비언어적 요소는 가산점이므로 총점이 110점까지 가능합니다.
+` : ''}
+
 점수 기준:
 - 85-100점: 매우 우수한 답변
 - 70-84점: 우수한 답변
@@ -95,6 +108,7 @@ ${isFollowUp ? `이것은 추가 질문에 대한 답변입니다. 학생이 이
 피드백 형식:
 먼저 "총점 XX점" 형식으로 점수를 명시하고,
 좋았던 점과 부족했던 점을 구체적으로 설명하세요.
+${videoFrame ? '비언어적 커뮤니케이션에 대한 피드백도 포함하세요.' : ''}
 ${isFollowUp ? '마지막으로 개선 방향을 제시하고 새로운 추가 질문 1개를 던지세요.' : '마지막으로 개선 방향을 제시하고 1-2개 추가 질문을 던지세요.'}`;
 
       userPrompt = `질문: ${question}
@@ -114,6 +128,7 @@ ${type === 'common_audio' && audioMetrics ? `
 
 ${isFollowUp ? `이것은 추가 질문에 대한 답변입니다. 학생이 이전 피드백을 바탕으로 더 깊이 있는 답변을 할 수 있도록 새로운 추가 질문을 1개만 제시해주세요.` : ''}
 
+${videoFrame ? `비디오 분석도 포함되어 있습니다. 학생의 표정, 자세, 제스처, 눈 맞춤 등 비언어적 요소를 평가하여 추가 점수를 부여하세요.` : ''}
 
 평가 기준:
 1. 자소서와의 연계성 (0-30점)
@@ -135,6 +150,16 @@ ${isFollowUp ? `이것은 추가 질문에 대한 답변입니다. 학생이 이
    - 논리적이고 설득력 있음: 21-26점
    - 매우 논리적이고 설득력 있음: 27-30점
 
+${videoFrame ? `
+4. 비언어적 커뮤니케이션 (0-10점 가산점)
+   - 표정: 자연스럽고 밝은 표정 유지 (0-3점)
+   - 자세: 바른 자세와 자신감 있는 태도 (0-3점)
+   - 제스처: 적절한 손동작과 몸짓 사용 (0-2점)
+   - 눈 맞춤: 카메라를 향한 자연스러운 시선 (0-2점)
+
+※ 비언어적 요소는 가산점이므로 총점이 110점까지 가능합니다.
+` : ''}
+
 점수 기준:
 - 85-100점: 매우 우수한 답변
 - 70-84점: 우수한 답변
@@ -152,6 +177,7 @@ ${isFollowUp ? `이것은 추가 질문에 대한 답변입니다. 학생이 이
 피드백 형식:
 먼저 "총점 XX점" 형식으로 점수를 명시하고,
 좋았던 점을 먼저 언급한 후, 개선할 점을 구체적이고 건설적으로 설명하세요.
+${videoFrame ? '비언어적 커뮤니케이션에 대한 피드백도 포함하세요.' : ''}
 ${isFollowUp ? '마지막으로 발전 방향을 제시하고, 새로운 추가 질문 1개를 던지세요.' : '마지막으로 발전 방향을 제시하고, 1-2개의 추가 질문을 던지세요.'}
 
 중요: 학생의 노력과 잠재력을 인정하면서도, 개선이 필요한 부분은 명확하게 지적해주세요. 격려적이면서도 구체적인 피드백을 제공하세요.`;
@@ -179,7 +205,18 @@ ${essay}
       model: selectedModel,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
+        { 
+          role: 'user', 
+          content: videoFrame 
+            ? [
+                { type: 'text', text: userPrompt },
+                { 
+                  type: 'image_url', 
+                  image_url: { url: videoFrame }
+                }
+              ]
+            : userPrompt
+        }
       ],
       stream: false,
       tools: [{
@@ -192,7 +229,7 @@ ${essay}
             properties: {
               score: {
                 type: 'number',
-                description: '0-100점 사이의 총점'
+                description: '0-110점 사이의 총점 (비언어적 요소 가산점 포함 시 최대 110점)'
               },
               feedback: {
                 type: 'string',
@@ -242,7 +279,7 @@ ${essay}
     const { score, feedback } = result;
 
     // Validate score
-    if (typeof score !== 'number' || score < 0 || score > 100) {
+    if (typeof score !== 'number' || score < 0 || score > 110) {
       throw new Error(`유효하지 않은 점수: ${score}`);
     }
 
