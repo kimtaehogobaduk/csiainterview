@@ -38,26 +38,17 @@ const ProfileCustomization = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Load user's purchased items (two-step to avoid relationship issues)
-      const { data: userItemsData, error: userItemsError } = await supabase
+      // Load user's purchased items
+      const { data: itemsData, error: itemsError } = await supabase
         .from('user_items')
-        .select('item_id')
+        .select('item_id, profile_items(*)')
         .eq('user_id', user.id);
 
-      if (userItemsError) throw userItemsError;
+      if (itemsError) throw itemsError;
 
-      const itemIds = (userItemsData || []).map((row: any) => row.item_id);
-      let items: ProfileItem[] = [];
-
-      if (itemIds.length > 0) {
-        const { data: itemsData, error: itemsError } = await supabase
-          .from('profile_items')
-          .select('id, name, item_type, config')
-          .in('id', itemIds);
-
-        if (itemsError) throw itemsError;
-        items = (itemsData || []) as ProfileItem[];
-      }
+      const items = itemsData
+        .map(item => item.profile_items as unknown as ProfileItem)
+        .filter(item => item !== null);
       
       setUserItems(items);
 
