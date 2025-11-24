@@ -9,8 +9,6 @@ import Footer from "@/components/Footer";
 import logoImage from "@/assets/logo.jpg";
 import { toast } from "sonner";
 import UpdateAnnouncementDialog from "@/components/UpdateAnnouncementDialog";
-import FeedbackDialog from "@/components/FeedbackDialog";
-import AdminReplyNotification from "@/components/AdminReplyNotification";
 const Index = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -56,15 +54,16 @@ const Index = () => {
         setIsAdmin(false);
         return;
       }
-      const { data, error } = await supabase.functions.invoke('verify-admin');
-      
+      const {
+        data,
+        error
+      } = await supabase.from("user_roles").select("role").eq("user_id", userId).eq("role", "admin").maybeSingle();
       if (error) {
-        console.error('Admin verification error:', error);
+        console.error('Admin check error:', error);
         setIsAdmin(false);
         return;
       }
-      
-      const isAdminUser = !!data?.isAdmin;
+      const isAdminUser = !!data;
       console.log('Admin check result:', {
         userId,
         isAdmin: isAdminUser,
@@ -274,8 +273,6 @@ const Index = () => {
   }
   return <div className="min-h-screen bg-background relative overflow-hidden">
       <UpdateAnnouncementDialog />
-      <FeedbackDialog />
-      <AdminReplyNotification />
       
       {/* Animated background */}
       <div className="absolute inset-0 overflow-hidden">

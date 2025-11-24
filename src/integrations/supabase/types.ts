@@ -445,36 +445,7 @@ export type Database = {
       }
     }
     Views: {
-      user_approval_requests: {
-        Row: {
-          approved_at: string | null
-          email: string | null
-          expires_at: string | null
-          id: string | null
-          requested_at: string | null
-          status: string | null
-          user_id: string | null
-        }
-        Insert: {
-          approved_at?: string | null
-          email?: string | null
-          expires_at?: string | null
-          id?: string | null
-          requested_at?: string | null
-          status?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          approved_at?: string | null
-          email?: string | null
-          expires_at?: string | null
-          id?: string | null
-          requested_at?: string | null
-          status?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       admin_adjust_mileage: {

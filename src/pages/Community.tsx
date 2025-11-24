@@ -13,6 +13,7 @@ import { ArrowLeft, Send, Paperclip, Trash2, Image as ImageIcon, Video, FileText
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import Footer from "@/components/Footer";
 import { useIsMobile } from "@/hooks/use-mobile";
+import FeedbackDialog from "@/components/FeedbackDialog";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { z } from "zod";
@@ -74,24 +75,16 @@ const Community = () => {
 
     setUser(session.user);
 
-    // Check admin status using server-side verification
-    try {
-      const { data: adminData } = await supabase.functions.invoke('verify-admin');
-      setIsAdmin(!!adminData?.isAdmin);
-    } catch (error) {
-      console.error('Admin verification error:', error);
-      setIsAdmin(false);
-    }
-
-    // Check elder role
     const { data: roles } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", session.user.id)
-      .eq("role", "elder")
-      .maybeSingle();
+      .in("role", ["admin", "elder"]);
 
-    setIsElder(!!roles);
+    if (roles) {
+      setIsAdmin(roles.some(r => r.role === "admin"));
+      setIsElder(roles.some(r => r.role === "elder"));
+    }
   };
 
   const loadPosts = async () => {
@@ -474,6 +467,7 @@ const Community = () => {
           ))}
         </div>
       </main>
+      <FeedbackDialog />
       <Footer />
     </div>
   );
