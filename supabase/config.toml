@@ -17,3 +17,6 @@ verify_jwt = true
 
 [functions.audio-analysis]
 verify_jwt = true
+
+[functions.verify-admin]
+verify_jwt = true
