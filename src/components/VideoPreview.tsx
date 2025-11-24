@@ -1,10 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Video, VideoOff } from "lucide-react";
 import { toast } from "sonner";
 
-const VideoPreview = () => {
+export interface VideoPreviewHandle {
+  captureFrame: () => Promise<string | null>;
+}
+
+const VideoPreview = forwardRef<VideoPreviewHandle>((props, ref) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isActive, setIsActive] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -41,6 +45,31 @@ const VideoPreview = () => {
     setIsActive(false);
     toast.info("카메라가 비활성화되었습니다.");
   };
+
+  const captureFrame = async (): Promise<string | null> => {
+    if (!videoRef.current || !isActive) {
+      return null;
+    }
+
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) return null;
+      
+      ctx.drawImage(videoRef.current, 0, 0);
+      return canvas.toDataURL('image/jpeg', 0.8);
+    } catch (error) {
+      console.error('Error capturing frame:', error);
+      return null;
+    }
+  };
+
+  useImperativeHandle(ref, () => ({
+    captureFrame
+  }));
 
   useEffect(() => {
     return () => {
@@ -95,6 +124,8 @@ const VideoPreview = () => {
       </CardContent>
     </Card>
   );
-};
+});
+
+VideoPreview.displayName = 'VideoPreview';
 
 export default VideoPreview;

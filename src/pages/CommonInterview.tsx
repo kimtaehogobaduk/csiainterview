@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +10,7 @@ import { getRandomQuestion } from "@/constants/questions";
 import Footer from "@/components/Footer";
 import FormattedFeedback from "@/components/FormattedFeedback";
 import AudioAnalysisChart from "@/components/AudioAnalysisChart";
-import VideoPreview from "@/components/VideoPreview";
+import VideoPreview, { VideoPreviewHandle } from "@/components/VideoPreview";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 
 interface FollowUpItem {
@@ -99,6 +99,7 @@ const FollowUpQuestionCard = ({
 
 const CommonInterview = () => {
   const navigate = useNavigate();
+  const videoRef = useRef<VideoPreviewHandle>(null);
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
@@ -299,6 +300,12 @@ const CommonInterview = () => {
     try {
       const wordsPerMinute = duration > 0 ? Math.round((wordCount / duration) * 60) : 0;
 
+      // Capture video frame if camera is enabled
+      let videoFrame: string | null = null;
+      if (enableCamera && videoRef.current) {
+        videoFrame = await videoRef.current.captureFrame();
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/interview-feedback`,
@@ -317,7 +324,8 @@ const CommonInterview = () => {
               wordsPerMinute,
               wordCount,
               duration: Math.round(duration)
-            }
+            },
+            videoFrame
           }),
         }
       );
@@ -427,6 +435,12 @@ const CommonInterview = () => {
     setScore(null);
     
     try {
+      // Capture video frame if camera is enabled
+      let videoFrame: string | null = null;
+      if (enableCamera && videoRef.current) {
+        videoFrame = await videoRef.current.captureFrame();
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/interview-feedback`,
@@ -440,7 +454,8 @@ const CommonInterview = () => {
             question,
             answer,
             type: 'common',
-            model: selectedModel
+            model: selectedModel,
+            videoFrame
           }),
         }
       );
@@ -675,9 +690,7 @@ const CommonInterview = () => {
           </div>
 
           {enableCamera && (
-            <div className="lg:col-span-1">
-              <VideoPreview />
-            </div>
+            <VideoPreview ref={videoRef} />
           )}
         </div>
       </div>
