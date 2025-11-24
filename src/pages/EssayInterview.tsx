@@ -268,9 +268,11 @@ const EssayInterview = () => {
     try {
       const wordsPerMinute = duration > 0 ? Math.round((wordCount / duration) * 60) : 0;
 
-      // Capture video frame if camera is enabled
+      // Stop recording and get video if camera is enabled
+      let videoBlob: Blob | null = null;
       let videoFrame: string | null = null;
       if (enableCamera && videoRef.current) {
+        videoBlob = await videoRef.current.stopRecording();
         videoFrame = await videoRef.current.captureFrame();
       }
 
@@ -359,6 +361,27 @@ const EssayInterview = () => {
       // Save to database
       const { data: { user } } = await supabase.auth.getUser();
       if (user && accumulatedText) {
+        let videoUrl: string | null = null;
+
+        // Upload video if available
+        if (videoBlob && user) {
+          const timestamp = Date.now();
+          const fileName = `${user.id}/${timestamp}.webm`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('interview-videos')
+            .upload(fileName, videoBlob, {
+              contentType: 'video/webm'
+            });
+
+          if (!uploadError) {
+            const { data: urlData } = supabase.storage
+              .from('interview-videos')
+              .getPublicUrl(fileName);
+            videoUrl = urlData.publicUrl;
+          }
+        }
+
         const { data: sessionData, error: saveError } = await supabase
           .from('interview_sessions')
           .insert({
@@ -367,7 +390,8 @@ const EssayInterview = () => {
             question: questions[currentQuestionIndex],
             answer: transcript,
             ai_feedback: accumulatedText,
-            score: extractedScore
+            score: extractedScore,
+            video_url: videoUrl
           })
           .select('id')
           .single();
@@ -573,9 +597,13 @@ const EssayInterview = () => {
     setScore(null);
     
     try {
-      // Capture video frame if camera is enabled
+      // Stop recording and get video if camera is enabled
+      let videoBlob: Blob | null = null;
       let videoFrame: string | null = null;
       if (enableCamera && videoRef.current) {
+        if (videoRef.current.isRecording) {
+          videoBlob = await videoRef.current.stopRecording();
+        }
         videoFrame = await videoRef.current.captureFrame();
       }
 
@@ -642,6 +670,27 @@ const EssayInterview = () => {
       // Save to database
       const { data: { user } } = await supabase.auth.getUser();
       if (user && accumulatedText) {
+        let videoUrl: string | null = null;
+
+        // Upload video if available
+        if (videoBlob && user) {
+          const timestamp = Date.now();
+          const fileName = `${user.id}/${timestamp}.webm`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('interview-videos')
+            .upload(fileName, videoBlob, {
+              contentType: 'video/webm'
+            });
+
+          if (!uploadError) {
+            const { data: urlData } = supabase.storage
+              .from('interview-videos')
+              .getPublicUrl(fileName);
+            videoUrl = urlData.publicUrl;
+          }
+        }
+
         const { data: sessionData, error: saveError } = await supabase
           .from('interview_sessions')
           .insert({
@@ -650,7 +699,8 @@ const EssayInterview = () => {
             question: questions[currentQuestionIndex],
             answer,
             ai_feedback: accumulatedText,
-            score: extractedScore
+            score: extractedScore,
+            video_url: videoUrl
           })
           .select('id')
           .single();
@@ -788,24 +838,30 @@ const EssayInterview = () => {
 
                       <div className="space-y-4">
                         <div className="flex gap-2">
-                          <Button
-                            variant={isListening ? "destructive" : "default"}
-                            onClick={isListening ? stopListening : startListening}
-                            className="flex-1"
-                            disabled={loading}
-                          >
-                            {isListening ? (
-                              <>
-                                <Square className="h-4 w-4 mr-2" />
-                                음성 인식 중지
-                              </>
-                            ) : (
-                              <>
-                                <Mic className="h-4 w-4 mr-2" />
-                                음성으로 답변
-                              </>
-                            )}
-                          </Button>
+                      <Button
+                        onClick={() => {
+                          if (enableCamera && videoRef.current && !videoRef.current.isRecording) {
+                            videoRef.current.startRecording();
+                          }
+                          if (!isListening) startListening();
+                          else stopListening();
+                        }}
+                        variant={isListening ? "destructive" : "default"}
+                        className="flex-1"
+                        disabled={loading}
+                      >
+                        {isListening ? (
+                          <>
+                            <Square className="h-4 w-4 mr-2" />
+                            음성 인식 중지
+                          </>
+                        ) : (
+                          <>
+                            <Mic className="h-4 w-4 mr-2" />
+                            음성으로 답변
+                          </>
+                        )}
+                      </Button>
                           {transcript && (
                             <Button
                               onClick={handleVoiceAnswer}

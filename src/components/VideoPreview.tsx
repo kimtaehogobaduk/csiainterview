@@ -1,17 +1,23 @@
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Video, VideoOff } from "lucide-react";
+import { Video, VideoOff, Circle, Square } from "lucide-react";
 import { toast } from "sonner";
 
 export interface VideoPreviewHandle {
   captureFrame: () => Promise<string | null>;
+  startRecording: () => void;
+  stopRecording: () => Promise<Blob | null>;
+  isRecording: boolean;
 }
 
 const VideoPreview = forwardRef<VideoPreviewHandle>((props, ref) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
   const [isActive, setIsActive] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
 
   const startVideo = async () => {
     try {
@@ -67,8 +73,59 @@ const VideoPreview = forwardRef<VideoPreviewHandle>((props, ref) => {
     }
   };
 
+  const startRecording = () => {
+    if (!stream) {
+      toast.error('카메라가 활성화되지 않았습니다.');
+      return;
+    }
+
+    try {
+      recordedChunksRef.current = [];
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'video/webm;codecs=vp9'
+      });
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          recordedChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.start(1000); // Collect data every second
+      mediaRecorderRef.current = mediaRecorder;
+      setIsRecording(true);
+      toast.success('녹화가 시작되었습니다.');
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      toast.error('녹화 시작에 실패했습니다.');
+    }
+  };
+
+  const stopRecording = (): Promise<Blob | null> => {
+    return new Promise((resolve) => {
+      if (!mediaRecorderRef.current || !isRecording) {
+        resolve(null);
+        return;
+      }
+
+      mediaRecorderRef.current.onstop = () => {
+        const blob = new Blob(recordedChunksRef.current, {
+          type: 'video/webm'
+        });
+        setIsRecording(false);
+        toast.info('녹화가 종료되었습니다.');
+        resolve(blob);
+      };
+
+      mediaRecorderRef.current.stop();
+    });
+  };
+
   useImperativeHandle(ref, () => ({
-    captureFrame
+    captureFrame,
+    startRecording,
+    stopRecording,
+    isRecording
   }));
 
   useEffect(() => {
@@ -83,7 +140,12 @@ const VideoPreview = forwardRef<VideoPreviewHandle>((props, ref) => {
     <Card className="shadow-soft">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <CardTitle className="text-lg">카메라 미리보기</CardTitle>
+          <CardTitle className="text-lg">
+            카메라 미리보기
+            {isRecording && (
+              <span className="ml-2 text-sm text-destructive animate-pulse">● 녹화 중</span>
+            )}
+          </CardTitle>
           <Button
             variant={isActive ? "destructive" : "default"}
             size="sm"

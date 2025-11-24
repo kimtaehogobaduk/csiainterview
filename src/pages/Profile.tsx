@@ -37,6 +37,7 @@ interface Session {
   answer: string;
   score: number | null;
   created_at: string;
+  video_url: string | null;
 }
 
 const Profile = () => {
@@ -116,7 +117,7 @@ const Profile = () => {
     setStatsLoading(true);
     const { data, error } = await supabase
       .from("interview_sessions")
-      .select("*")
+      .select("id, session_type, question, answer, score, created_at, video_url")
       .order("created_at", { ascending: false })
       .limit(10);
 
@@ -480,6 +481,18 @@ const Profile = () => {
                         {session.answer || "답변 없음"}
                       </p>
                     </div>
+                    {session.video_url && (
+                      <div>
+                        <Label className="text-sm font-medium mb-2 block">녹화 영상</Label>
+                        <video 
+                          controls 
+                          className="w-full rounded-lg border"
+                          src={session.video_url}
+                        >
+                          Your browser does not support the video tag.
+                        </video>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))
