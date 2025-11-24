@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Trophy, Medal, Award, Crown } from "lucide-react";
 import Footer from "@/components/Footer";
@@ -36,89 +36,109 @@ const Leaderboard = () => {
       const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
       setCurrentMonth(month);
 
-      // Get leaderboard data
+      // Get leaderboard data with profiles in one query
       const { data: leaderboardData, error: leaderboardError } = await supabase
         .from('monthly_leaderboard')
-        .select('user_id, total_mileage')
+        .select(`
+          user_id,
+          total_mileage,
+          profiles!inner(
+            full_name,
+            email
+          )
+        `)
         .eq('month', month)
         .order('total_mileage', { ascending: false })
         .limit(10);
 
-      if (leaderboardError) throw leaderboardError;
+      if (leaderboardError) {
+        console.error('Leaderboard error:', leaderboardError);
+        throw leaderboardError;
+      }
+
       if (!leaderboardData || leaderboardData.length === 0) {
         setLeaderboard([]);
         setLoading(false);
         return;
       }
 
-      // Get user profiles
-      const userIds = leaderboardData.map(entry => entry.user_id);
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, full_name, email')
-        .in('id', userIds);
-
-      if (profilesError) throw profilesError;
-
       // Get user customizations
-      const { data: customizationData } = await supabase
+      const userIds = leaderboardData.map(entry => entry.user_id);
+      const { data: customizationData, error: customError } = await supabase
         .from('user_customization')
         .select(`
           user_id,
+          theme_color,
           avatar_frame_id,
           badge_id,
-          theme_color,
-          custom_icon_id
+          custom_icon_id,
+          profile_items!user_customization_avatar_frame_id_fkey(
+            id,
+            name,
+            config
+          )
         `)
         .in('user_id', userIds);
 
-      // Get all profile items for customizations
+      if (customError) {
+        console.error('Customization error:', customError);
+      }
+
+      // Get all profile items for badges and icons
       const allItemIds = customizationData?.flatMap(c => [
-        c.avatar_frame_id,
         c.badge_id,
         c.custom_icon_id
       ]).filter(id => id !== null) || [];
 
-      let itemsData: any[] = [];
+      let badgeAndIconData: any[] = [];
       if (allItemIds.length > 0) {
-        const { data } = await supabase
+        const { data, error: itemsError } = await supabase
           .from('profile_items')
           .select('*')
           .in('id', allItemIds);
-        itemsData = data || [];
+        
+        if (itemsError) {
+          console.error('Items error:', itemsError);
+        }
+        badgeAndIconData = data || [];
       }
 
       // Combine all data
-      const formattedData = leaderboardData.map((entry, index) => {
-        const profile = profilesData?.find(p => p.id === entry.user_id);
+      const formattedData = leaderboardData.map((entry: any, index) => {
         const customization = customizationData?.find(c => c.user_id === entry.user_id);
         
-        const avatarFrame = customization?.avatar_frame_id 
-          ? itemsData.find(item => item.id === customization.avatar_frame_id)
-          : null;
+        // Avatar frame comes from the joined data
+        const avatarFrame = customization?.profile_items || null;
+        
+        // Badge and custom icon from separate query
         const badge = customization?.badge_id
-          ? itemsData.find(item => item.id === customization.badge_id)
+          ? badgeAndIconData.find(item => item.id === customization.badge_id)
           : null;
         const customIcon = customization?.custom_icon_id
-          ? itemsData.find(item => item.id === customization.custom_icon_id)
+          ? badgeAndIconData.find(item => item.id === customization.custom_icon_id)
           : null;
 
         return {
           user_id: entry.user_id,
           total_mileage: entry.total_mileage,
           rank: index + 1,
-          full_name: profile?.full_name || '익명',
-          email: profile?.email || '',
+          full_name: entry.profiles?.full_name || '익명',
+          email: entry.profiles?.email || '',
           avatar_frame: avatarFrame,
           badge: badge,
-          theme_color: customization?.theme_color,
+          theme_color: customization?.theme_color || '#0ea5e9',
           custom_icon: customIcon,
         };
       });
 
       setLeaderboard(formattedData);
-    } catch (error) {
-      console.error('Error loading leaderboard:', error);
+    } catch (error: any) {
+      console.error('Error loading leaderboard:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
       toast.error('리더보드를 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
@@ -190,17 +210,22 @@ const Leaderboard = () => {
         {loading ? (
           <Card className="shadow-soft">
             <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">로딩 중...</p>
+              <div className="flex flex-col items-center gap-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                <p className="text-muted-foreground">로딩 중...</p>
+              </div>
             </CardContent>
           </Card>
         ) : leaderboard.length === 0 ? (
           <Card className="shadow-soft">
             <CardContent className="py-12 text-center">
               <Trophy className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground">아직 순위 데이터가 없습니다.</p>
+              <p className="text-muted-foreground mb-4">아직 순위 데이터가 없습니다.</p>
+              <p className="text-sm text-muted-foreground mb-6">
+                면접 연습을 시작하고 마일리지를 획득하세요!
+              </p>
               <Button 
                 onClick={() => navigate("/common-interview")}
-                className="mt-4"
               >
                 면접 연습하러 가기
               </Button>
@@ -212,9 +237,9 @@ const Leaderboard = () => {
               <Card 
                 key={entry.user_id} 
                 className={`shadow-soft hover:shadow-strong transition-all duration-300 border-2 animate-fade-in-up ${
-                  entry.rank === 1 ? 'border-yellow-500/50' :
-                  entry.rank === 2 ? 'border-gray-400/50' :
-                  entry.rank === 3 ? 'border-amber-600/50' :
+                  entry.rank === 1 ? 'border-yellow-500/50 bg-yellow-50/50 dark:bg-yellow-950/10' :
+                  entry.rank === 2 ? 'border-gray-400/50 bg-gray-50/50 dark:bg-gray-950/10' :
+                  entry.rank === 3 ? 'border-amber-600/50 bg-amber-50/50 dark:bg-amber-950/10' :
                   'border-border/50'
                 }`}
                 style={{ animationDelay: `${index * 0.1}s` }}
@@ -260,7 +285,10 @@ const Leaderboard = () => {
                           {entry.rank}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-xl font-bold truncate" style={entry.theme_color ? { color: entry.theme_color } : undefined}>
+                          <h3 
+                            className="text-xl font-bold truncate" 
+                            style={{ color: entry.theme_color }}
+                          >
                             {entry.full_name || entry.email}
                           </h3>
                           {entry.full_name && (
