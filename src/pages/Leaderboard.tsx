@@ -13,6 +13,10 @@ interface LeaderboardEntry {
   rank: number;
   full_name: string;
   email: string;
+  avatar_frame?: any;
+  badge?: any;
+  theme_color?: string;
+  custom_icon?: any;
 }
 
 const Leaderboard = () => {
@@ -32,26 +36,85 @@ const Leaderboard = () => {
       const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
       setCurrentMonth(month);
 
-      const { data, error } = await supabase
+      // Get leaderboard data
+      const { data: leaderboardData, error: leaderboardError } = await supabase
         .from('monthly_leaderboard')
-        .select(`
-          user_id,
-          total_mileage,
-          profiles!inner(full_name, email)
-        `)
+        .select('user_id, total_mileage')
         .eq('month', month)
         .order('total_mileage', { ascending: false })
         .limit(10);
 
-      if (error) throw error;
+      if (leaderboardError) throw leaderboardError;
+      if (!leaderboardData || leaderboardData.length === 0) {
+        setLeaderboard([]);
+        setLoading(false);
+        return;
+      }
 
-      const formattedData = data.map((entry, index) => ({
-        user_id: entry.user_id,
-        total_mileage: entry.total_mileage,
-        rank: index + 1,
-        full_name: (entry.profiles as any).full_name || '익명',
-        email: (entry.profiles as any).email || ''
-      }));
+      // Get user profiles
+      const userIds = leaderboardData.map(entry => entry.user_id);
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      // Get user customizations
+      const { data: customizationData } = await supabase
+        .from('user_customization')
+        .select(`
+          user_id,
+          avatar_frame_id,
+          badge_id,
+          theme_color,
+          custom_icon_id
+        `)
+        .in('user_id', userIds);
+
+      // Get all profile items for customizations
+      const allItemIds = customizationData?.flatMap(c => [
+        c.avatar_frame_id,
+        c.badge_id,
+        c.custom_icon_id
+      ]).filter(id => id !== null) || [];
+
+      let itemsData: any[] = [];
+      if (allItemIds.length > 0) {
+        const { data } = await supabase
+          .from('profile_items')
+          .select('*')
+          .in('id', allItemIds);
+        itemsData = data || [];
+      }
+
+      // Combine all data
+      const formattedData = leaderboardData.map((entry, index) => {
+        const profile = profilesData?.find(p => p.id === entry.user_id);
+        const customization = customizationData?.find(c => c.user_id === entry.user_id);
+        
+        const avatarFrame = customization?.avatar_frame_id 
+          ? itemsData.find(item => item.id === customization.avatar_frame_id)
+          : null;
+        const badge = customization?.badge_id
+          ? itemsData.find(item => item.id === customization.badge_id)
+          : null;
+        const customIcon = customization?.custom_icon_id
+          ? itemsData.find(item => item.id === customization.custom_icon_id)
+          : null;
+
+        return {
+          user_id: entry.user_id,
+          total_mileage: entry.total_mileage,
+          rank: index + 1,
+          full_name: profile?.full_name || '익명',
+          email: profile?.email || '',
+          avatar_frame: avatarFrame,
+          badge: badge,
+          theme_color: customization?.theme_color,
+          custom_icon: customIcon,
+        };
+      });
 
       setLeaderboard(formattedData);
     } catch (error) {
@@ -158,10 +221,37 @@ const Leaderboard = () => {
               >
                 <CardContent className="p-6">
                   <div className="flex items-center gap-6">
-                    <div className="flex-shrink-0">
-                      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-soft ${getRankBadgeColor(entry.rank)}`}>
-                        {getRankIcon(entry.rank)}
+                    <div className="flex-shrink-0 relative">
+                      <div 
+                        className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-soft ${getRankBadgeColor(entry.rank)}`}
+                        style={entry.avatar_frame?.config?.color ? {
+                          border: `3px solid ${entry.avatar_frame.config.color}`,
+                          boxShadow: `0 0 12px ${entry.avatar_frame.config.color}40`
+                        } : undefined}
+                      >
+                        {entry.custom_icon?.config?.iconName ? (
+                          <span className="text-3xl">{entry.custom_icon.config.iconName}</span>
+                        ) : (
+                          getRankIcon(entry.rank)
+                        )}
                       </div>
+                      {entry.badge && (
+                        <div 
+                          className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full flex items-center justify-center shadow-soft"
+                          style={{ 
+                            backgroundColor: entry.badge.config?.color || '#888888',
+                            border: '2px solid white'
+                          }}
+                        >
+                          {entry.badge.config?.icon === 'trophy' ? (
+                            <Trophy className="h-4 w-4 text-white" />
+                          ) : entry.badge.config?.icon === 'crown' ? (
+                            <Crown className="h-4 w-4 text-white" />
+                          ) : (
+                            <Award className="h-4 w-4 text-white" />
+                          )}
+                        </div>
+                      )}
                     </div>
                     
                     <div className="flex-1 min-w-0">
@@ -170,7 +260,7 @@ const Leaderboard = () => {
                           {entry.rank}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-xl font-bold truncate">
+                          <h3 className="text-xl font-bold truncate" style={entry.theme_color ? { color: entry.theme_color } : undefined}>
                             {entry.full_name || entry.email}
                           </h3>
                           {entry.full_name && (
