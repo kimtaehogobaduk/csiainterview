@@ -9,6 +9,8 @@ import Footer from "@/components/Footer";
 import logoImage from "@/assets/logo.jpg";
 import { toast } from "sonner";
 import UpdateAnnouncementDialog from "@/components/UpdateAnnouncementDialog";
+import FeedbackDialog from "@/components/FeedbackDialog";
+import AdminReplyNotification from "@/components/AdminReplyNotification";
 const Index = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -273,6 +275,8 @@ const Index = () => {
   }
   return <div className="min-h-screen bg-background relative overflow-hidden">
       <UpdateAnnouncementDialog />
+      <FeedbackDialog />
+      <AdminReplyNotification />
       
       {/* Animated background */}
       <div className="absolute inset-0 overflow-hidden">
