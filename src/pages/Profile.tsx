@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, User, FileText, MessageSquare, Save, Trash2, Video, Palette, Trophy, TrendingUp } from "lucide-react";
+import { ArrowLeft, User, FileText, MessageSquare, Save, Trash2, Video, Palette, Trophy, TrendingUp, Bookmark } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import Footer from "@/components/Footer";
 import ModelSelector from "@/components/ModelSelector";
@@ -40,6 +40,14 @@ interface Session {
   video_url: string | null;
 }
 
+interface SavedQuestion {
+  id: string;
+  question: string;
+  source: string;
+  essay: string | null;
+  created_at: string;
+}
+
 const Profile = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -53,10 +61,16 @@ const Profile = () => {
   });
   const [essays, setEssays] = useState<Essay[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [savedQuestions, setSavedQuestions] = useState<SavedQuestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [statsLoading, setStatsLoading] = useState(true);
   const [leaderboardRank, setLeaderboardRank] = useState<number | null>(null);
   const [totalUsers, setTotalUsers] = useState<number>(0);
+  const [practicingQuestion, setPracticingQuestion] = useState<SavedQuestion | null>(null);
+  const [practiceAnswer, setPracticeAnswer] = useState("");
+  const [practiceFeedback, setPracticeFeedback] = useState("");
+  const [practiceScore, setPracticeScore] = useState<number | null>(null);
+  const [practiceLoading, setPracticeLoading] = useState(false);
 
   useEffect(() => {
     loadUserData();
@@ -70,7 +84,7 @@ const Profile = () => {
     }
 
     setUser(user);
-    await Promise.all([loadProfile(user.id), loadEssays(), loadSessions(), loadLeaderboardRank(user.id)]);
+    await Promise.all([loadProfile(user.id), loadEssays(), loadSessions(), loadLeaderboardRank(user.id), loadSavedQuestions()]);
   };
 
   const loadProfile = async (userId: string) => {
@@ -128,6 +142,20 @@ const Profile = () => {
 
     setSessions(data || []);
     setStatsLoading(false);
+  };
+
+  const loadSavedQuestions = async () => {
+    const { data, error } = await supabase
+      .from("saved_questions")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error loading saved questions:", error);
+      return;
+    }
+
+    setSavedQuestions(data || []);
   };
 
   const loadLeaderboardRank = async (userId: string) => {
@@ -197,6 +225,131 @@ const Profile = () => {
     }
   };
 
+  const handleDeleteSavedQuestion = async (questionId: string) => {
+    if (!confirm("저장된 질문을 삭제하시겠습니까?")) return;
+
+    try {
+      const { error } = await supabase
+        .from("saved_questions")
+        .delete()
+        .eq("id", questionId);
+
+      if (error) throw error;
+      toast.success("질문이 삭제되었습니다.");
+      loadSavedQuestions();
+    } catch (error: any) {
+      toast.error("삭제에 실패했습니다.");
+    }
+  };
+
+  const handleSubmitPracticeAnswer = async () => {
+    if (!practiceAnswer.trim() || !practicingQuestion) {
+      toast.error('답변을 입력해주세요.');
+      return;
+    }
+
+    setPracticeLoading(true);
+    setPracticeFeedback("");
+    setPracticeScore(null);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/interview-feedback`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({
+            question: practicingQuestion.question,
+            answer: practiceAnswer,
+            essay: practicingQuestion.essay,
+            type: practicingQuestion.source === 'essay_based' ? 'essay_based' : 'common',
+            model: profile.ai_model
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to get feedback');
+      if (!response.body) throw new Error('No response body');
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedText = '';
+      let extractedScore: number | null = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+            
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) {
+                accumulatedText += content;
+                setPracticeFeedback(accumulatedText);
+                
+                const scoreMatch = accumulatedText.match(/총점\s*(\d+)점/);
+                if (scoreMatch && !extractedScore) {
+                  extractedScore = parseInt(scoreMatch[1]);
+                  setPracticeScore(extractedScore);
+                }
+              }
+            } catch (e) {
+              // Ignore parse errors
+            }
+          }
+        }
+      }
+
+      // Save to database
+      if (user && accumulatedText) {
+        const { data: sessionData, error: saveError } = await supabase
+          .from('interview_sessions')
+          .insert({
+            user_id: user.id,
+            session_type: practicingQuestion.source,
+            question: practicingQuestion.question,
+            answer: practiceAnswer,
+            ai_feedback: accumulatedText,
+            score: extractedScore
+          })
+          .select('id')
+          .single();
+
+        if (!saveError && extractedScore && sessionData) {
+          const mileageAmount = extractedScore + 30;
+          await supabase.rpc('award_mileage', {
+            p_user_id: user.id,
+            p_amount: mileageAmount,
+            p_reason: '저장된 질문 연습 완료',
+            p_session_id: sessionData.id
+          });
+          toast.success(`피드백을 받았습니다! +${mileageAmount} 마일리지`);
+        } else {
+          toast.success('피드백을 받았습니다!');
+        }
+        
+        loadSessions();
+        loadProfile(user.id);
+      }
+    } catch (error: any) {
+      toast.error('피드백을 가져오는데 실패했습니다.');
+    } finally {
+      setPracticeLoading(false);
+    }
+  };
+
   const getSessionTypeName = (type: string) => {
     return type === "common" ? "공통 면접" : "자소서 기반";
   };
@@ -223,7 +376,7 @@ const Profile = () => {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="profile">
               <User className="h-4 w-4 mr-2" />
               프로필
@@ -231,6 +384,10 @@ const Profile = () => {
             <TabsTrigger value="customization">
               <Palette className="h-4 w-4 mr-2" />
               꾸미기
+            </TabsTrigger>
+            <TabsTrigger value="saved-questions">
+              <Bookmark className="h-4 w-4 mr-2" />
+              저장된 질문
             </TabsTrigger>
             <TabsTrigger value="essays">
               <FileText className="h-4 w-4 mr-2" />
@@ -376,6 +533,89 @@ const Profile = () => {
 
           <TabsContent value="customization" className="space-y-6">
             <ProfileCustomization />
+          </TabsContent>
+
+          <TabsContent value="saved-questions" className="space-y-4">
+            {savedQuestions.length === 0 ? (
+              <Card className="shadow-soft">
+                <CardContent className="py-12 text-center">
+                  <Bookmark className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground">저장된 질문이 없습니다.</p>
+                  <p className="text-sm text-muted-foreground mt-2">면접 연습 중 "질문 저장" 버튼을 눌러 좋은 질문을 보관하세요.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                {savedQuestions.map((q) => (
+                  <Card key={q.id} className="shadow-soft">
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <CardTitle className="text-lg">{q.question}</CardTitle>
+                          <CardDescription>
+                            {q.source === 'essay_based' ? '자소서 기반' : '공통 면접'} · {new Date(q.created_at).toLocaleDateString("ko-KR")}
+                          </CardDescription>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setPracticingQuestion(q);
+                              setPracticeAnswer("");
+                              setPracticeFeedback("");
+                              setPracticeScore(null);
+                            }}
+                          >
+                            다시 답변하기
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteSavedQuestion(q.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    {practicingQuestion?.id === q.id && (
+                      <CardContent className="space-y-4 border-t pt-4">
+                        <Textarea
+                          placeholder="답변을 입력하세요..."
+                          value={practiceAnswer}
+                          onChange={(e) => setPracticeAnswer(e.target.value)}
+                          rows={8}
+                          className="resize-none"
+                        />
+                        <Button
+                          onClick={handleSubmitPracticeAnswer}
+                          disabled={practiceLoading || !practiceAnswer.trim()}
+                          className="w-full"
+                        >
+                          {practiceLoading ? "분석 중..." : "피드백 받기"}
+                        </Button>
+                        {practiceFeedback && (
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                              <h4 className="font-semibold">AI 피드백</h4>
+                              {practiceScore !== null && (
+                                <div className="text-xl font-bold text-primary">
+                                  {practiceScore}점 / 100점
+                                </div>
+                              )}
+                            </div>
+                            <div className="p-4 bg-muted rounded-lg">
+                              <p className="whitespace-pre-wrap">{practiceFeedback}</p>
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    )}
+                  </Card>
+                ))}
+              </>
+            )}
           </TabsContent>
 
           <TabsContent value="essays" className="space-y-4">
