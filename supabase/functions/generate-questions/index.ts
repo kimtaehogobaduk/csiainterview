@@ -97,6 +97,12 @@ ${essay}
       .filter((q: string) => q.length > 10 && !q.match(/^\d+\.|^[-*]/))
       .slice(0, count);
 
+    // Shuffle questions randomly using Fisher-Yates algorithm
+    for (let i = questions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [questions[i], questions[j]] = [questions[j], questions[i]];
+    }
+
     console.log('Generated questions:', questions);
 
     return new Response(
