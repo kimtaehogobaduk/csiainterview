@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Mic, MicOff, RefreshCw, Send, Square } from "lucide-react";
+import { ArrowLeft, Mic, MicOff, RefreshCw, Send, Square, Bookmark } from "lucide-react";
 import { getRandomQuestion } from "@/constants/questions";
 import Footer from "@/components/Footer";
 import FormattedFeedback from "@/components/FormattedFeedback";
@@ -160,6 +160,29 @@ const CommonInterview = () => {
     setFollowUpChain([]);
     setAudioScores(null);
     resetTranscript();
+  };
+
+  const handleSaveQuestion = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error('로그인이 필요합니다.');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('saved_questions')
+        .insert({
+          user_id: user.id,
+          question: question,
+          source: 'common'
+        });
+
+      if (error) throw error;
+      toast.success('질문이 저장되었습니다!');
+    } catch (error: any) {
+      toast.error('질문 저장에 실패했습니다.');
+    }
   };
 
   const handleSubmitFollowUp = async (followUpAnswer: string, parentQuestion: string) => {
@@ -625,7 +648,18 @@ const CommonInterview = () => {
             </CardHeader>
             <CardContent>
               <div className="p-6 bg-muted rounded-lg mb-6">
-                <p className="text-lg font-medium">{question}</p>
+                <div className="flex justify-between items-start gap-4">
+                  <p className="text-lg font-medium flex-1">{question}</p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSaveQuestion}
+                    className="shrink-0"
+                  >
+                    <Bookmark className="h-4 w-4 mr-2" />
+                    저장
+                  </Button>
+                </div>
               </div>
 
               <div className="space-y-4">

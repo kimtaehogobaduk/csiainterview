@@ -317,6 +317,33 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_questions: {
+        Row: {
+          created_at: string
+          essay: string | null
+          id: string
+          question: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          essay?: string | null
+          id?: string
+          question: string
+          source?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          essay?: string | null
+          id?: string
+          question?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_customization: {
         Row: {
           avatar_frame_id: string | null
