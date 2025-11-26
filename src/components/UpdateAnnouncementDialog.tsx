@@ -14,14 +14,14 @@ const UpdateAnnouncementDialog = () => {
 
   useEffect(() => {
     // Check if user has seen this announcement
-    const hasSeenAnnouncement = localStorage.getItem("hasSeenV3Announcement");
+    const hasSeenAnnouncement = localStorage.getItem("hasSeenV4Announcement");
     if (!hasSeenAnnouncement) {
       setOpen(true);
     }
   }, []);
 
   const handleClose = () => {
-    localStorage.setItem("hasSeenV3Announcement", "true");
+    localStorage.setItem("hasSeenV4Announcement", "true");
     setOpen(false);
   };
 
