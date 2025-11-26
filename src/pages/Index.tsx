@@ -283,7 +283,11 @@ const Index = () => {
         <div className="container mx-auto px-4 py-5">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-2xl overflow-hidden shadow-soft ring-2 ring-primary/30 hover:ring-primary/50 transition-all">
+              <div 
+                className="h-12 w-12 rounded-2xl overflow-hidden shadow-soft ring-2 ring-primary/30 hover:ring-primary/50 transition-all cursor-pointer hover:scale-110"
+                onClick={() => window.open('https://blog.naver.com/csiahabitmakers', '_blank')}
+                title="제작자 블로그 방문하기"
+              >
                 <img src={logoImage} alt="합격의 길" className="w-full h-full object-cover" />
               </div>
               <div>
