@@ -13,6 +13,7 @@ import Community from "./pages/Community";
 import Leaderboard from "./pages/Leaderboard";
 import Shop from "./pages/Shop";
 import NotFound from "./pages/NotFound";
+import UpdateAnnouncementDialog from "./components/UpdateAnnouncementDialog";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <UpdateAnnouncementDialog />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
