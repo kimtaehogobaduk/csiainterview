@@ -704,10 +704,11 @@ const EssayInterview = () => {
                 accumulatedText += content;
                 setFeedback(accumulatedText);
                 
-                const scoreMatch = accumulatedText.match(/총점\s*(\d+)점/);
+                const scoreMatch = accumulatedText.match(/총점\s*:?\s*(\d+)\s*점/i);
                 if (scoreMatch && !extractedScore) {
                   extractedScore = parseInt(scoreMatch[1]);
                   setScore(extractedScore);
+                  console.log('Score extracted:', extractedScore);
                 }
               }
             } catch (e) {
@@ -719,10 +720,13 @@ const EssayInterview = () => {
 
       // Final score extraction if not found during streaming
       if (!extractedScore) {
-        const scoreMatch = accumulatedText.match(/총점\s*(\d+)점/);
+        const scoreMatch = accumulatedText.match(/총점\s*:?\s*(\d+)\s*점/i);
         if (scoreMatch) {
           extractedScore = parseInt(scoreMatch[1]);
           setScore(extractedScore);
+          console.log('Score extracted (final):', extractedScore);
+        } else {
+          console.warn('Score not found in feedback:', accumulatedText.substring(0, 100));
         }
       }
 
