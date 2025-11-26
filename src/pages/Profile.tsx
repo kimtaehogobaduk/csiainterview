@@ -38,6 +38,7 @@ interface Session {
   score: number | null;
   created_at: string;
   video_url: string | null;
+  ai_feedback: string | null;
 }
 
 interface SavedQuestion {
@@ -131,7 +132,7 @@ const Profile = () => {
     setStatsLoading(true);
     const { data, error } = await supabase
       .from("interview_sessions")
-      .select("id, session_type, question, answer, score, created_at, video_url")
+      .select("id, session_type, question, answer, score, created_at, video_url, ai_feedback")
       .order("created_at", { ascending: false })
       .limit(10);
 
@@ -721,6 +722,14 @@ const Profile = () => {
                         {session.answer || "답변 없음"}
                       </p>
                     </div>
+                    {session.ai_feedback && (
+                      <div>
+                        <Label className="text-sm font-medium mb-2 block">AI 피드백</Label>
+                        <div className="p-4 bg-muted/50 rounded-lg border">
+                          <p className="text-sm whitespace-pre-wrap">{session.ai_feedback}</p>
+                        </div>
+                      </div>
+                    )}
                     {session.video_url && (
                       <div>
                         <Label className="text-sm font-medium mb-2 block">녹화 영상</Label>
