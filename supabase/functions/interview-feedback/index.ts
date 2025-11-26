@@ -19,7 +19,7 @@ const requestSchema = z.object({
     wordCount: z.number().optional(),
     duration: z.number().optional()
   }).optional(),
-  videoFrame: z.string().optional()
+  videoFrame: z.string().nullable().optional()
 });
 
 serve(async (req) => {
