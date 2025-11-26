@@ -417,6 +417,8 @@ const EssayInterview = () => {
         } else {
           toast.success('피드백을 받았습니다!');
         }
+      } else if (!user) {
+        toast.success('피드백을 받았습니다! (로그인하면 기록이 저장되고 마일리지를 받을 수 있습니다)');
       }
     } catch (error: any) {
       console.error('Voice analysis error:', error);
@@ -553,6 +555,8 @@ const EssayInterview = () => {
         } else {
           toast.success('피드백을 받았습니다!');
         }
+      } else if (!user) {
+        toast.success('피드백을 받았습니다! (로그인하면 기록이 저장되고 마일리지를 받을 수 있습니다)');
       }
     } catch (error: any) {
       toast.error('피드백을 가져오는데 실패했습니다.');
@@ -772,6 +776,8 @@ const EssayInterview = () => {
         } else {
           toast.success('피드백을 받았습니다!');
         }
+      } else if (!user) {
+        toast.success('피드백을 받았습니다! (로그인하면 기록이 저장되고 마일리지를 받을 수 있습니다)');
       }
     } catch (error: any) {
       toast.error('피드백을 가져오는데 실패했습니다.');
