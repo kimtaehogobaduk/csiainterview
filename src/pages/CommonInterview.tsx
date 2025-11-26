@@ -273,6 +273,19 @@ const CommonInterview = () => {
         }
       }
 
+      // Final score extraction if not found during streaming
+      if (!extractedScore) {
+        const scoreMatch = accumulatedText.match(/총점\s*(\d+)점/);
+        if (scoreMatch) {
+          extractedScore = parseInt(scoreMatch[1]);
+          setFollowUpChain(prev => prev.map((item, idx) => 
+            idx === tempIndex 
+              ? { ...item, score: extractedScore }
+              : item
+          ));
+        }
+      }
+
       // Save session and award mileage
       const { data: { user } } = await supabase.auth.getUser();
       if (user && accumulatedText) {
@@ -409,6 +422,15 @@ const CommonInterview = () => {
               // Ignore parse errors
             }
           }
+        }
+      }
+
+      // Final score extraction if not found during streaming
+      if (!extractedScore) {
+        const scoreMatch = accumulatedText.match(/총점\s*(\d+)점/);
+        if (scoreMatch) {
+          extractedScore = parseInt(scoreMatch[1]);
+          setScore(extractedScore);
         }
       }
 
