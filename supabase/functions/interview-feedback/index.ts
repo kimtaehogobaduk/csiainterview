@@ -11,7 +11,7 @@ const requestSchema = z.object({
   question: z.string().trim().min(1).max(1000),
   answer: z.string().trim().min(1).max(10000),
   essay: z.string().trim().max(20000).optional(),
-  type: z.enum(['common', 'essay_based', 'common_audio']),
+  type: z.enum(['common', 'essay_based', 'common_audio', 'essay_based_audio']),
   isFollowUp: z.boolean().optional(),
   model: z.string().optional(),
   audioMetrics: z.object({
