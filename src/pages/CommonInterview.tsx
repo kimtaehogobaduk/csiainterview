@@ -293,23 +293,26 @@ const CommonInterview = () => {
         console.log('[FollowUp Score Extract Final] Attempting final extraction...');
         
         const scorePatterns = [
+          /^총점\s*:?\s*(\d+)\s*점/im,
           /총점\s*:?\s*(\d+)\s*점/i,
-          /총점.*?(\d+)점/i,
-          /총점[^\d]*(\d+)[^\d]/i,
-          /(\d+)\s*점.*총점/i,
+          /총점.*?(\d+)\s*점/i,
+          /(\d+)\s*점/i,
         ];
         
         for (const pattern of scorePatterns) {
           const scoreMatch = accumulatedText.match(pattern);
           if (scoreMatch) {
-            extractedScore = parseInt(scoreMatch[1]);
-            console.log('[FollowUp Score Extract Final] ✓ Score found:', extractedScore);
-            setFollowUpChain(prev => prev.map((item, idx) => 
-              idx === tempIndex 
-                ? { ...item, score: extractedScore }
-                : item
-            ));
-            break;
+            const potentialScore = parseInt(scoreMatch[1]);
+            if (potentialScore >= 0 && potentialScore <= 110) {
+              extractedScore = potentialScore;
+              console.log('[FollowUp Score Extract Final] ✓ Score found:', extractedScore);
+              setFollowUpChain(prev => prev.map((item, idx) => 
+                idx === tempIndex 
+                  ? { ...item, score: extractedScore }
+                  : item
+              ));
+              break;
+            }
           }
         }
         
@@ -444,30 +447,37 @@ const CommonInterview = () => {
                 accumulatedText += content;
                 setFeedback(accumulatedText);
                 
-                // 더 관대한 점수 추출 - 다양한 형식 지원
-                console.log('[Score Extract] Current accumulated text length:', accumulatedText.length);
-                
-                // Try multiple regex patterns
-                const scorePatterns = [
-                  /총점\s*:?\s*(\d+)\s*점/i,
-                  /총점.*?(\d+)점/i,
-                  /총점[^\d]*(\d+)[^\d]/i,
-                  /(\d+)\s*점.*총점/i,
-                ];
-                
-                if (!extractedScore) {
+                // 점수 추출 - AI 응답 첫 줄에서 추출
+                if (!extractedScore && accumulatedText.length > 5) {
+                  // 첫 30자 로깅
+                  if (accumulatedText.length < 50) {
+                    console.log('[Score Extract] First chunk:', accumulatedText);
+                  }
+                  
+                  // 여러 패턴으로 시도
+                  const scorePatterns = [
+                    /^총점\s*:?\s*(\d+)\s*점/i,           // 첫 줄: 총점: 75점
+                    /총점\s*:?\s*(\d+)\s*점/i,            // 어디든: 총점: 75점
+                    /총점.*?(\d+)\s*점/i,                  // 총점 ... 75점
+                    /(\d+)\s*점/i,                        // 75점 (숫자만)
+                  ];
+                  
                   for (const pattern of scorePatterns) {
                     const scoreMatch = accumulatedText.match(pattern);
                     if (scoreMatch) {
-                      extractedScore = parseInt(scoreMatch[1]);
-                      console.log('[Score Extract] ✓ Score found:', extractedScore, 'Pattern:', pattern);
-                      setScore(extractedScore);
-                      break;
+                      const potentialScore = parseInt(scoreMatch[1]);
+                      // 0-110 범위 체크
+                      if (potentialScore >= 0 && potentialScore <= 110) {
+                        extractedScore = potentialScore;
+                        console.log('[Score Extract] ✓ Score found:', extractedScore, 'Pattern:', pattern.source);
+                        setScore(extractedScore);
+                        break;
+                      }
                     }
                   }
                   
                   if (!extractedScore && accumulatedText.length > 100) {
-                    console.log('[Score Extract] ✗ No score found yet. Text sample:', accumulatedText.substring(0, 200));
+                    console.warn('[Score Extract] ✗ No valid score found. First 200 chars:', accumulatedText.substring(0, 200));
                   }
                 }
 
@@ -498,27 +508,32 @@ const CommonInterview = () => {
       // Final score extraction with multiple attempts
       if (!extractedScore) {
         console.log('[Score Extract Final] Attempting final extraction...');
-        console.log('[Score Extract Final] Full text:', accumulatedText);
+        console.log('[Score Extract Final] First 300 chars:', accumulatedText.substring(0, 300));
         
         const scorePatterns = [
-          /총점\s*:?\s*(\d+)\s*점/i,
-          /총점.*?(\d+)점/i,
-          /총점[^\d]*(\d+)[^\d]/i,
-          /(\d+)\s*점.*총점/i,
+          /^총점\s*:?\s*(\d+)\s*점/im,              // 첫 줄: 총점: 75점 (multiline)
+          /총점\s*:?\s*(\d+)\s*점/i,               // 어디든: 총점: 75점
+          /총점.*?(\d+)\s*점/i,                     // 총점 ... 75점
+          /(\d+)\s*점/i,                           // 75점 (fallback)
         ];
         
         for (const pattern of scorePatterns) {
           const scoreMatch = accumulatedText.match(pattern);
           if (scoreMatch) {
-            extractedScore = parseInt(scoreMatch[1]);
-            console.log('[Score Extract Final] ✓ Score found:', extractedScore, 'Pattern:', pattern);
-            setScore(extractedScore);
-            break;
+            const potentialScore = parseInt(scoreMatch[1]);
+            // 0-110 범위 체크
+            if (potentialScore >= 0 && potentialScore <= 110) {
+              extractedScore = potentialScore;
+              console.log('[Score Extract Final] ✓ Score found:', extractedScore, 'Pattern:', pattern.source);
+              setScore(extractedScore);
+              break;
+            }
           }
         }
         
         if (!extractedScore) {
           console.error('[Score Extract Final] ✗ Failed to extract score from complete text');
+          console.error('[Score Extract Final] Full feedback length:', accumulatedText.length);
         }
       }
 
@@ -669,24 +684,25 @@ const CommonInterview = () => {
                 accumulatedText += content;
                 setFeedback(accumulatedText);
                 
-                // Try to extract score with multiple patterns
-                console.log('[Text Submit Score Extract] Current accumulated text length:', accumulatedText.length);
-                
-                if (!extractedScore) {
+                // 점수 추출 - AI 응답 첫 줄에서 추출
+                if (!extractedScore && accumulatedText.length > 5) {
                   const scorePatterns = [
+                    /^총점\s*:?\s*(\d+)\s*점/i,
                     /총점\s*:?\s*(\d+)\s*점/i,
-                    /총점.*?(\d+)점/i,
-                    /총점[^\d]*(\d+)[^\d]/i,
-                    /(\d+)\s*점.*총점/i,
+                    /총점.*?(\d+)\s*점/i,
+                    /(\d+)\s*점/i,
                   ];
                   
                   for (const pattern of scorePatterns) {
                     const scoreMatch = accumulatedText.match(pattern);
                     if (scoreMatch) {
-                      extractedScore = parseInt(scoreMatch[1]);
-                      console.log('[Text Submit Score Extract] ✓ Score found:', extractedScore);
-                      setScore(extractedScore);
-                      break;
+                      const potentialScore = parseInt(scoreMatch[1]);
+                      if (potentialScore >= 0 && potentialScore <= 110) {
+                        extractedScore = potentialScore;
+                        console.log('[Text Submit Score Extract] ✓ Score found:', extractedScore);
+                        setScore(extractedScore);
+                        break;
+                      }
                     }
                   }
                 }
@@ -701,28 +717,30 @@ const CommonInterview = () => {
       // Final score extraction if not found during streaming
       if (!extractedScore) {
         console.log('[Text Submit Score Extract Final] Attempting final extraction...');
-        console.log('[Text Submit Score Extract Final] Full text:', accumulatedText);
+        console.log('[Text Submit Score Extract Final] First 300 chars:', accumulatedText.substring(0, 300));
         
         const scorePatterns = [
+          /^총점\s*:?\s*(\d+)\s*점/im,
           /총점\s*:?\s*(\d+)\s*점/i,
-          /총점.*?(\d+)점/i,
-          /총점[^\d]*(\d+)[^\d]/i,
-          /(\d+)\s*점.*총점/i,
+          /총점.*?(\d+)\s*점/i,
+          /(\d+)\s*점/i,
         ];
         
         for (const pattern of scorePatterns) {
           const scoreMatch = accumulatedText.match(pattern);
           if (scoreMatch) {
-            extractedScore = parseInt(scoreMatch[1]);
-            console.log('[Text Submit Score Extract Final] ✓ Score found:', extractedScore);
-            setScore(extractedScore);
-            break;
+            const potentialScore = parseInt(scoreMatch[1]);
+            if (potentialScore >= 0 && potentialScore <= 110) {
+              extractedScore = potentialScore;
+              console.log('[Text Submit Score Extract Final] ✓ Score found:', extractedScore);
+              setScore(extractedScore);
+              break;
+            }
           }
         }
         
         if (!extractedScore) {
           console.error('[Text Submit Score Extract Final] ✗ Failed to extract score');
-          console.warn('[Text Submit Score Extract Final] Text sample:', accumulatedText.substring(0, 100));
         }
       }
       
