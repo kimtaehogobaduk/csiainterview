@@ -328,10 +328,31 @@ const EssayInterview = () => {
                 accumulatedText += content;
                 setFeedback(accumulatedText);
                 
-                const scoreMatch = accumulatedText.match(/총점\s*(\d+)점/);
-                if (scoreMatch && !extractedScore) {
-                  extractedScore = parseInt(scoreMatch[1]);
-                  setScore(extractedScore);
+                // 더 관대한 점수 추출 - 다양한 형식 지원
+                console.log('[Essay Score Extract] Current accumulated text length:', accumulatedText.length);
+                
+                // Try multiple regex patterns
+                const scorePatterns = [
+                  /총점\s*:?\s*(\d+)\s*점/i,
+                  /총점.*?(\d+)점/i,
+                  /총점[^\d]*(\d+)[^\d]/i,
+                  /(\d+)\s*점.*총점/i,
+                ];
+                
+                if (!extractedScore) {
+                  for (const pattern of scorePatterns) {
+                    const scoreMatch = accumulatedText.match(pattern);
+                    if (scoreMatch) {
+                      extractedScore = parseInt(scoreMatch[1]);
+                      console.log('[Essay Score Extract] ✓ Score found:', extractedScore, 'Pattern:', pattern);
+                      setScore(extractedScore);
+                      break;
+                    }
+                  }
+                  
+                  if (!extractedScore && accumulatedText.length > 100) {
+                    console.log('[Essay Score Extract] ✗ No score found yet. Text sample:', accumulatedText.substring(0, 200));
+                  }
                 }
 
                 // Extract individual scores
@@ -358,17 +379,39 @@ const EssayInterview = () => {
         }
       }
 
-      // Final score extraction if not found during streaming
+      // Final score extraction with multiple attempts
       if (!extractedScore) {
-        const scoreMatch = accumulatedText.match(/총점\s*(\d+)점/);
-        if (scoreMatch) {
-          extractedScore = parseInt(scoreMatch[1]);
-          setScore(extractedScore);
+        console.log('[Essay Score Extract Final] Attempting final extraction...');
+        console.log('[Essay Score Extract Final] Full text:', accumulatedText);
+        
+        const scorePatterns = [
+          /총점\s*:?\s*(\d+)\s*점/i,
+          /총점.*?(\d+)점/i,
+          /총점[^\d]*(\d+)[^\d]/i,
+          /(\d+)\s*점.*총점/i,
+        ];
+        
+        for (const pattern of scorePatterns) {
+          const scoreMatch = accumulatedText.match(pattern);
+          if (scoreMatch) {
+            extractedScore = parseInt(scoreMatch[1]);
+            console.log('[Essay Score Extract Final] ✓ Score found:', extractedScore, 'Pattern:', pattern);
+            setScore(extractedScore);
+            break;
+          }
+        }
+        
+        if (!extractedScore) {
+          console.error('[Essay Score Extract Final] ✗ Failed to extract score from complete text');
         }
       }
 
       // Save to database
       const { data: { user } } = await supabase.auth.getUser();
+      console.log('[Essay DB Save] User:', user?.id);
+      console.log('[Essay DB Save] Accumulated text length:', accumulatedText.length);
+      console.log('[Essay DB Save] Extracted score:', extractedScore);
+      
       if (user && accumulatedText) {
         let videoUrl: string | null = null;
 
@@ -512,14 +555,30 @@ const EssayInterview = () => {
                     : item
                 ));
                 
-                const scoreMatch = accumulatedText.match(/총점\s*(\d+)점/);
-                if (scoreMatch && !extractedScore) {
-                  extractedScore = parseInt(scoreMatch[1]);
-                  setFollowUpChain(prev => prev.map((item, idx) => 
-                    idx === tempIndex 
-                      ? { ...item, score: extractedScore }
-                      : item
-                  ));
+                // Try to extract score with multiple patterns
+                console.log('[Essay FollowUp Score Extract] Current accumulated text length:', accumulatedText.length);
+                
+                if (!extractedScore) {
+                  const scorePatterns = [
+                    /총점\s*:?\s*(\d+)\s*점/i,
+                    /총점.*?(\d+)점/i,
+                    /총점[^\d]*(\d+)[^\d]/i,
+                    /(\d+)\s*점.*총점/i,
+                  ];
+                  
+                  for (const pattern of scorePatterns) {
+                    const scoreMatch = accumulatedText.match(pattern);
+                    if (scoreMatch) {
+                      extractedScore = parseInt(scoreMatch[1]);
+                      console.log('[Essay FollowUp Score Extract] ✓ Score found:', extractedScore);
+                      setFollowUpChain(prev => prev.map((item, idx) => 
+                        idx === tempIndex 
+                          ? { ...item, score: extractedScore }
+                          : item
+                      ));
+                      break;
+                    }
+                  }
                 }
               }
             } catch (e) {
@@ -531,14 +590,31 @@ const EssayInterview = () => {
 
       // Final score extraction if not found during streaming
       if (!extractedScore) {
-        const scoreMatch = accumulatedText.match(/총점\s*(\d+)점/);
-        if (scoreMatch) {
-          extractedScore = parseInt(scoreMatch[1]);
-          setFollowUpChain(prev => prev.map((item, idx) => 
-            idx === tempIndex 
-              ? { ...item, score: extractedScore }
-              : item
-          ));
+        console.log('[Essay FollowUp Score Extract Final] Attempting final extraction...');
+        
+        const scorePatterns = [
+          /총점\s*:?\s*(\d+)\s*점/i,
+          /총점.*?(\d+)점/i,
+          /총점[^\d]*(\d+)[^\d]/i,
+          /(\d+)\s*점.*총점/i,
+        ];
+        
+        for (const pattern of scorePatterns) {
+          const scoreMatch = accumulatedText.match(pattern);
+          if (scoreMatch) {
+            extractedScore = parseInt(scoreMatch[1]);
+            console.log('[Essay FollowUp Score Extract Final] ✓ Score found:', extractedScore);
+            setFollowUpChain(prev => prev.map((item, idx) => 
+              idx === tempIndex 
+                ? { ...item, score: extractedScore }
+                : item
+            ));
+            break;
+          }
+        }
+        
+        if (!extractedScore) {
+          console.error('[Essay FollowUp Score Extract Final] ✗ Failed to extract score');
         }
       }
 
@@ -719,11 +795,26 @@ const EssayInterview = () => {
                 accumulatedText += content;
                 setFeedback(accumulatedText);
                 
-                const scoreMatch = accumulatedText.match(/총점\s*:?\s*(\d+)\s*점/i);
-                if (scoreMatch && !extractedScore) {
-                  extractedScore = parseInt(scoreMatch[1]);
-                  setScore(extractedScore);
-                  console.log('Score extracted:', extractedScore);
+                // Try to extract score with multiple patterns
+                console.log('[Essay Text Submit Score Extract] Current accumulated text length:', accumulatedText.length);
+                
+                if (!extractedScore) {
+                  const scorePatterns = [
+                    /총점\s*:?\s*(\d+)\s*점/i,
+                    /총점.*?(\d+)점/i,
+                    /총점[^\d]*(\d+)[^\d]/i,
+                    /(\d+)\s*점.*총점/i,
+                  ];
+                  
+                  for (const pattern of scorePatterns) {
+                    const scoreMatch = accumulatedText.match(pattern);
+                    if (scoreMatch) {
+                      extractedScore = parseInt(scoreMatch[1]);
+                      console.log('[Essay Text Submit Score Extract] ✓ Score found:', extractedScore);
+                      setScore(extractedScore);
+                      break;
+                    }
+                  }
                 }
               }
             } catch (e) {
@@ -735,13 +826,29 @@ const EssayInterview = () => {
 
       // Final score extraction if not found during streaming
       if (!extractedScore) {
-        const scoreMatch = accumulatedText.match(/총점\s*:?\s*(\d+)\s*점/i);
-        if (scoreMatch) {
-          extractedScore = parseInt(scoreMatch[1]);
-          setScore(extractedScore);
-          console.log('Score extracted (final):', extractedScore);
-        } else {
-          console.warn('Score not found in feedback:', accumulatedText.substring(0, 100));
+        console.log('[Essay Text Submit Score Extract Final] Attempting final extraction...');
+        console.log('[Essay Text Submit Score Extract Final] Full text:', accumulatedText);
+        
+        const scorePatterns = [
+          /총점\s*:?\s*(\d+)\s*점/i,
+          /총점.*?(\d+)점/i,
+          /총점[^\d]*(\d+)[^\d]/i,
+          /(\d+)\s*점.*총점/i,
+        ];
+        
+        for (const pattern of scorePatterns) {
+          const scoreMatch = accumulatedText.match(pattern);
+          if (scoreMatch) {
+            extractedScore = parseInt(scoreMatch[1]);
+            console.log('[Essay Text Submit Score Extract Final] ✓ Score found:', extractedScore);
+            setScore(extractedScore);
+            break;
+          }
+        }
+        
+        if (!extractedScore) {
+          console.error('[Essay Text Submit Score Extract Final] ✗ Failed to extract score');
+          console.warn('[Essay Text Submit Score Extract Final] Text sample:', accumulatedText.substring(0, 100));
         }
       }
 
