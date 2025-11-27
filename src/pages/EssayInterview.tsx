@@ -405,16 +405,31 @@ const EssayInterview = () => {
           .select('id')
           .single();
 
+        console.log('[Mileage Debug] saveError:', saveError);
+        console.log('[Mileage Debug] extractedScore:', extractedScore);
+        console.log('[Mileage Debug] sessionData:', sessionData);
+        
         if (!saveError && extractedScore && sessionData) {
           const mileageAmount = extractedScore + 30;
-          await supabase.rpc('award_mileage', {
+          console.log('[Mileage Debug] Calling award_mileage with amount:', mileageAmount);
+          
+          const { data: mileageData, error: mileageError } = await supabase.rpc('award_mileage', {
             p_user_id: user.id,
             p_amount: mileageAmount,
             p_reason: '자소서 기반 면접 연습 완료',
             p_session_id: sessionData.id
           });
-          toast.success(`피드백을 받았습니다! +${mileageAmount} 마일리지`);
+          
+          console.log('[Mileage Debug] award_mileage result:', { mileageData, mileageError });
+          
+          if (mileageError) {
+            console.error('[Mileage Debug] Failed to award mileage:', mileageError);
+            toast.success('피드백을 받았습니다! (마일리지 적립 실패)');
+          } else {
+            toast.success(`피드백을 받았습니다! +${mileageAmount} 마일리지`);
+          }
         } else {
+          console.log('[Mileage Debug] Mileage not awarded - conditions not met');
           toast.success('피드백을 받았습니다!');
         }
       } else if (!user) {
