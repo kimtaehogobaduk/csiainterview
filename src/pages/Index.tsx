@@ -21,6 +21,18 @@ const Index = () => {
       } = await supabase.auth.getSession();
       setUser(session?.user || null);
       if (session?.user) {
+        // Check onboarding status
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('onboarding_completed')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profile && !profile.onboarding_completed) {
+          navigate('/onboarding');
+          return;
+        }
+        
         await checkAdmin(session.user.id);
       }
     };
@@ -41,7 +53,7 @@ const Index = () => {
       }
     });
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
   const checkAdmin = async (userId: string) => {
     try {
       // Check if localStorage is accessible

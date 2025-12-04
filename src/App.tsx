@@ -12,6 +12,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Community from "./pages/Community";
 import Leaderboard from "./pages/Leaderboard";
 import Shop from "./pages/Shop";
+import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
 import UpdateAnnouncementDialog from "./components/UpdateAnnouncementDialog";
 
@@ -27,6 +28,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/common-interview" element={<CommonInterview />} />
           <Route path="/essay-interview" element={<EssayInterview />} />
           <Route path="/profile" element={<Profile />} />

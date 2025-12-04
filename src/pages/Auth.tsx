@@ -21,15 +21,33 @@ const Auth = () => {
   const [dataConsent, setDataConsent] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const checkSessionAndOnboarding = async (session: any) => {
       if (session) {
-        navigate("/");
+        // Check if onboarding is completed
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('onboarding_completed')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profile?.onboarding_completed) {
+          navigate("/");
+        } else {
+          navigate("/onboarding");
+        }
       }
+    };
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      checkSessionAndOnboarding(session);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        navigate("/");
+        // Use setTimeout to avoid deadlock
+        setTimeout(() => {
+          checkSessionAndOnboarding(session);
+        }, 0);
       }
     });
 
@@ -41,9 +59,25 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      toast.success("로그인 성공!");
+      
+      // Check onboarding status
+      if (data.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('onboarding_completed')
+          .eq('id', data.user.id)
+          .single();
+
+        toast.success("로그인 성공!");
+        
+        if (profile?.onboarding_completed) {
+          navigate("/");
+        } else {
+          navigate("/onboarding");
+        }
+      }
     } catch (error: any) {
       toast.error(error.message || "로그인에 실패했습니다.");
     } finally {
@@ -62,16 +96,20 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: { full_name: fullName },
-          emailRedirectTo: `${window.location.origin}/`
+          emailRedirectTo: `${window.location.origin}/onboarding`
         }
       });
       if (error) throw error;
-      toast.success("회원가입 성공! 로그인해주세요.");
+      
+      if (data.user) {
+        toast.success("회원가입 성공! 설정을 완료해주세요.");
+        navigate("/onboarding");
+      }
     } catch (error: any) {
       toast.error(error.message || "회원가입에 실패했습니다.");
     } finally {
