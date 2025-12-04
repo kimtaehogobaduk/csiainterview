@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Mic, MicOff, RefreshCw, Send, Square, Bookmark } from "lucide-react";
+import { ArrowLeft, Mic, MicOff, RefreshCw, Send, Square, Bookmark, Loader2 } from "lucide-react";
 import { getRandomQuestion } from "@/constants/questions";
 import Footer from "@/components/Footer";
 import FormattedFeedback from "@/components/FormattedFeedback";
@@ -122,6 +122,9 @@ const CommonInterview = () => {
   const [selectedModel, setSelectedModel] = useState("google/gemini-2.5-flash");
   const [desiredSchool, setDesiredSchool] = useState("cheongshim");
   const [customSchoolInfo, setCustomSchoolInfo] = useState<any>(null);
+  const [schoolQuestions, setSchoolQuestions] = useState<string[]>([]);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [schoolName, setSchoolName] = useState("청심국제고등학교");
   
   const { 
     transcript, 
@@ -134,9 +137,56 @@ const CommonInterview = () => {
   } = useSpeechRecognition();
 
   useEffect(() => {
-    setQuestion(getRandomQuestion());
     loadUserSettings();
   }, []);
+
+  // Load school-specific questions when school changes
+  useEffect(() => {
+    if (desiredSchool && desiredSchool !== 'cheongshim') {
+      loadSchoolQuestions();
+    } else if (desiredSchool === 'cheongshim') {
+      // Use default questions for cheongshim
+      setQuestion(getRandomQuestion());
+      setSchoolName("청심국제고등학교");
+    }
+  }, [desiredSchool, customSchoolInfo]);
+
+  const loadSchoolQuestions = async () => {
+    setLoadingQuestions(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-common-questions`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            school: desiredSchool,
+            customSchoolInfo: customSchoolInfo,
+            count: 30
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to load questions');
+
+      const data = await response.json();
+      if (data.questions && data.questions.length > 0) {
+        setSchoolQuestions(data.questions);
+        setSchoolName(data.schoolName);
+        // Set first question
+        const randomIndex = Math.floor(Math.random() * data.questions.length);
+        setQuestion(data.questions[randomIndex]);
+      }
+    } catch (error) {
+      console.error('Failed to load school questions:', error);
+      // Fallback to default questions
+      setQuestion(getRandomQuestion());
+    } finally {
+      setLoadingQuestions(false);
+    }
+  };
 
   const loadUserSettings = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -168,11 +218,21 @@ const CommonInterview = () => {
           }
         }
       }
+    } else {
+      // Guest user - use default questions
+      setQuestion(getRandomQuestion());
     }
   };
 
   const handleNewQuestion = () => {
-    setQuestion(getRandomQuestion());
+    if (schoolQuestions.length > 0) {
+      // Use school-specific questions
+      const randomIndex = Math.floor(Math.random() * schoolQuestions.length);
+      setQuestion(schoolQuestions[randomIndex]);
+    } else {
+      // Fallback to default questions
+      setQuestion(getRandomQuestion());
+    }
     setAnswer("");
     setFeedback("");
     setScore(null);
@@ -850,30 +910,47 @@ const CommonInterview = () => {
           <div className="lg:col-span-2 space-y-6">
           <Card className="shadow-soft">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-2xl">공통 면접 질문</CardTitle>
+              <div>
+                <CardTitle className="text-2xl">공통 면접 질문</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {schoolName} 면접
+                </p>
+              </div>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleNewQuestion}
+                disabled={loadingQuestions}
               >
-                <RefreshCw className="h-4 w-4 mr-2" />
+                {loadingQuestions ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                )}
                 새 질문
               </Button>
             </CardHeader>
             <CardContent>
               <div className="p-6 bg-muted rounded-lg mb-6">
-                <div className="flex justify-between items-start gap-4">
-                  <p className="text-lg font-medium flex-1">{question}</p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleSaveQuestion}
-                    className="shrink-0"
-                  >
-                    <Bookmark className="h-4 w-4 mr-2" />
-                    저장
-                  </Button>
-                </div>
+                {loadingQuestions ? (
+                  <div className="flex items-center justify-center gap-2 py-4">
+                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    <span className="text-muted-foreground">{schoolName} 맞춤 질문을 생성하고 있습니다...</span>
+                  </div>
+                ) : (
+                  <div className="flex justify-between items-start gap-4">
+                    <p className="text-lg font-medium flex-1">{question}</p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleSaveQuestion}
+                      className="shrink-0"
+                    >
+                      <Bookmark className="h-4 w-4 mr-2" />
+                      저장
+                    </Button>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-4">
