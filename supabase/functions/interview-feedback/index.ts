@@ -63,6 +63,10 @@ const requestSchema = z.object({
   isFollowUp: z.boolean().optional(),
   model: z.string().optional(),
   school: z.string().optional(),
+  customSchoolInfo: z.object({
+    name: z.string(),
+    interviewFocus: z.string().optional(),
+  }).optional(),
   audioMetrics: z.object({
     wordsPerMinute: z.number().optional(),
     wordCount: z.number().optional(),
@@ -88,7 +92,7 @@ serve(async (req) => {
       );
     }
     
-    const { question, answer, essay, type, isFollowUp, model, school, audioMetrics, videoFrame } = validationResult.data;
+    const { question, answer, essay, type, isFollowUp, model, school, customSchoolInfo, audioMetrics, videoFrame } = validationResult.data;
 
     if (!question || !answer) {
       throw new Error('질문과 답변은 필수입니다.');
@@ -100,7 +104,15 @@ serve(async (req) => {
     }
 
     // Get school-specific information
-    const schoolInfo = SCHOOL_INFO[school || 'cheongshim'] || SCHOOL_INFO['cheongshim'];
+    let schoolInfo;
+    if (school?.startsWith('custom:') && customSchoolInfo) {
+      schoolInfo = {
+        name: customSchoolInfo.name,
+        focus: customSchoolInfo.interviewFocus || '자기주도학습 능력, 진로 목표, 학업 열정, 인성'
+      };
+    } else {
+      schoolInfo = SCHOOL_INFO[school || 'cheongshim'] || SCHOOL_INFO['cheongshim'];
+    }
 
     let systemPrompt = '';
     let userPrompt = '';

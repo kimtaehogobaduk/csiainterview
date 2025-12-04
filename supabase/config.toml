@@ -17,3 +17,6 @@ verify_jwt = true
 
 [functions.audio-analysis]
 verify_jwt = true
+
+[functions.research-school]
+verify_jwt = true

@@ -121,6 +121,7 @@ const CommonInterview = () => {
   }>>([]);
   const [selectedModel, setSelectedModel] = useState("google/gemini-2.5-flash");
   const [desiredSchool, setDesiredSchool] = useState("cheongshim");
+  const [customSchoolInfo, setCustomSchoolInfo] = useState<any>(null);
   
   const { 
     transcript, 
@@ -149,7 +150,23 @@ const CommonInterview = () => {
       if (data && !error) {
         setSelectedModel(data.ai_model || 'google/gemini-2.5-flash');
         setEnableCamera(data.enable_camera || false);
-        setDesiredSchool((data as any).desired_school || 'cheongshim');
+        const schoolValue = (data as any).desired_school || 'cheongshim';
+        setDesiredSchool(schoolValue);
+        
+        // If custom school, fetch school info
+        if (schoolValue.startsWith('custom:')) {
+          const customSchoolName = schoolValue.replace('custom:', '');
+          try {
+            const { data: schoolData } = await supabase.functions.invoke('research-school', {
+              body: { schoolName: customSchoolName }
+            });
+            if (schoolData?.schoolInfo) {
+              setCustomSchoolInfo(schoolData.schoolInfo);
+            }
+          } catch (e) {
+            console.error('Failed to load custom school info:', e);
+          }
+        }
       }
     }
   };
@@ -211,7 +228,11 @@ const CommonInterview = () => {
             type: 'common',
             isFollowUp: true,
             model: selectedModel,
-            school: desiredSchool
+            school: desiredSchool,
+            customSchoolInfo: customSchoolInfo ? {
+              name: customSchoolInfo.name,
+              interviewFocus: customSchoolInfo.interviewFocus
+            } : undefined
           }),
         }
       );
@@ -414,6 +435,10 @@ const CommonInterview = () => {
             type: 'common_audio',
             model: selectedModel,
             school: desiredSchool,
+            customSchoolInfo: customSchoolInfo ? {
+              name: customSchoolInfo.name,
+              interviewFocus: customSchoolInfo.interviewFocus
+            } : undefined,
             audioMetrics: {
               wordsPerMinute,
               wordCount,

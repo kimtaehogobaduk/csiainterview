@@ -70,6 +70,12 @@ const requestSchema = z.object({
   essay: z.string().trim().min(10, '자기소개서는 최소 10자 이상이어야 합니다.').max(10000, '자기소개서는 최대 10,000자까지 입력 가능합니다.'),
   count: z.number().int().min(1).max(50).optional().default(10),
   school: z.string().optional().default('cheongshim'),
+  customSchoolInfo: z.object({
+    name: z.string(),
+    keywords: z.array(z.string()).optional(),
+    characteristics: z.string().optional(),
+    interviewFocus: z.string().optional(),
+  }).optional(),
 });
 
 serve(async (req) => {
@@ -89,7 +95,7 @@ serve(async (req) => {
       );
     }
     
-    const { essay, count, school } = validationResult.data;
+    const { essay, count, school, customSchoolInfo } = validationResult.data;
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -97,7 +103,16 @@ serve(async (req) => {
     }
 
     // Get school-specific information
-    const schoolInfo = SCHOOL_INFO[school] || SCHOOL_INFO['cheongshim'];
+    let schoolInfo;
+    if (school.startsWith('custom:') && customSchoolInfo) {
+      schoolInfo = {
+        name: customSchoolInfo.name,
+        keywords: customSchoolInfo.keywords || ['자기주도학습', '창의성', '리더십'],
+        focus: customSchoolInfo.interviewFocus || '자기주도학습 능력, 진로 목표, 학업 열정, 인성'
+      };
+    } else {
+      schoolInfo = SCHOOL_INFO[school] || SCHOOL_INFO['cheongshim'];
+    }
 
     // Calculate question distribution based on count
     const baseQuestions = Math.floor(count * 0.6); // 60% from essay

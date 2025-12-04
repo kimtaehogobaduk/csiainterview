@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, User, FileText, MessageSquare, Save, Trash2, Video, Palette, Trophy, TrendingUp, Bookmark } from "lucide-react";
+import { ArrowLeft, User, FileText, MessageSquare, Save, Trash2, Video, Palette, Trophy, TrendingUp, Bookmark, Search, Loader2 } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import Footer from "@/components/Footer";
 import ModelSelector from "@/components/ModelSelector";
@@ -74,6 +74,10 @@ const [profile, setProfile] = useState<Profile>({
   const [practiceAnswer, setPracticeAnswer] = useState("");
   const [practiceFeedback, setPracticeFeedback] = useState("");
   const [practiceScore, setPracticeScore] = useState<number | null>(null);
+  const [customSchoolName, setCustomSchoolName] = useState("");
+  const [researchingSchool, setResearchingSchool] = useState(false);
+  const [customSchoolInfo, setCustomSchoolInfo] = useState<any>(null);
+  const [showCustomSchoolInput, setShowCustomSchoolInput] = useState(false);
   const [practiceLoading, setPracticeLoading] = useState(false);
 
   useEffect(() => {
@@ -103,6 +107,8 @@ const [profile, setProfile] = useState<Profile>({
       return;
     }
 
+    const desiredSchool = (data as any).desired_school || "cheongshim";
+    
     setProfile({
       full_name: data.full_name || "",
       email: data.email || "",
@@ -110,8 +116,25 @@ const [profile, setProfile] = useState<Profile>({
       essay_question_count: data.essay_question_count || 10,
       mileage: data.mileage || 0,
       enable_camera: data.enable_camera || false,
-      desired_school: (data as any).desired_school || "cheongshim"
+      desired_school: desiredSchool
     });
+
+    // If custom school, set up the custom school input
+    if (desiredSchool.startsWith('custom:')) {
+      setShowCustomSchoolInput(true);
+      setCustomSchoolName(desiredSchool.replace('custom:', ''));
+      // Load custom school info
+      try {
+        const { data: schoolData } = await supabase.functions.invoke('research-school', {
+          body: { schoolName: desiredSchool.replace('custom:', '') }
+        });
+        if (schoolData?.schoolInfo) {
+          setCustomSchoolInfo(schoolData.schoolInfo);
+        }
+      } catch (e) {
+        console.error('Failed to load custom school info:', e);
+      }
+    }
   };
 
   const loadEssays = async () => {
@@ -211,6 +234,30 @@ const [profile, setProfile] = useState<Profile>({
       toast.error("업데이트에 실패했습니다.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResearchSchool = async () => {
+    if (!customSchoolName.trim()) {
+      toast.error('학교 이름을 입력해주세요.');
+      return;
+    }
+
+    setResearchingSchool(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('research-school', {
+        body: { schoolName: customSchoolName.trim() }
+      });
+
+      if (error) throw error;
+
+      setCustomSchoolInfo(data.schoolInfo);
+      setProfile({ ...profile, desired_school: `custom:${customSchoolName.trim()}` });
+      toast.success(`${data.schoolInfo.name} 정보가 수집되었습니다!`);
+    } catch (error: any) {
+      toast.error('학교 정보 수집에 실패했습니다.');
+    } finally {
+      setResearchingSchool(false);
     }
   };
 
@@ -423,14 +470,57 @@ const [profile, setProfile] = useState<Profile>({
                   <div className="space-y-2">
                     <Label>희망 학교</Label>
                     <select
-                      value={profile.desired_school}
-                      onChange={(e) => setProfile({ ...profile, desired_school: e.target.value })}
+                      value={profile.desired_school?.startsWith('custom:') || showCustomSchoolInput ? 'other' : profile.desired_school}
+                      onChange={(e) => {
+                        if (e.target.value === 'other') {
+                          setShowCustomSchoolInput(true);
+                          setCustomSchoolName('');
+                          setCustomSchoolInfo(null);
+                        } else {
+                          setShowCustomSchoolInput(false);
+                          setProfile({ ...profile, desired_school: e.target.value });
+                          setCustomSchoolInfo(null);
+                        }
+                      }}
                       className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
                       {SCHOOLS.map(school => (
                         <option key={school.value} value={school.value}>{school.label}</option>
                       ))}
                     </select>
+                    
+                    {(profile.desired_school?.startsWith('custom:') || showCustomSchoolInput) && (
+                      <div className="space-y-2 mt-3 p-3 border border-dashed rounded-lg">
+                        <Label className="text-sm">학교 이름 직접 입력</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            value={customSchoolName || profile.desired_school?.replace('custom:', '') || ''}
+                            onChange={(e) => setCustomSchoolName(e.target.value)}
+                            placeholder="예: OO고등학교"
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            onClick={handleResearchSchool}
+                            disabled={researchingSchool || !customSchoolName.trim()}
+                            size="sm"
+                          >
+                            {researchingSchool ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Search className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                        {customSchoolInfo && (
+                          <div className="mt-2 p-2 bg-muted rounded text-xs space-y-1">
+                            <p className="font-medium">{customSchoolInfo.name}</p>
+                            <p className="text-muted-foreground">{customSchoolInfo.type}</p>
+                            <p className="text-muted-foreground">{customSchoolInfo.characteristics}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <p className="text-xs text-muted-foreground">면접 질문과 피드백이 학교 특성에 맞게 조정됩니다</p>
                   </div>
                   <div className="space-y-2">
