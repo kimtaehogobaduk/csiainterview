@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Mic, MicOff, RefreshCw, Send, Square, Bookmark, Loader2 } from "lucide-react";
-import { getRandomQuestion } from "@/constants/questions";
+import { ArrowLeft, Mic, MicOff, RefreshCw, Send, Square, Bookmark, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { getRandomQuestion, COMMON_QUESTIONS } from "@/constants/questions";
+import { getSchoolLabel } from "@/constants/schools";
 import Footer from "@/components/Footer";
 import FormattedFeedback from "@/components/FormattedFeedback";
 import AudioAnalysisChart from "@/components/AudioAnalysisChart";
@@ -125,6 +126,7 @@ const CommonInterview = () => {
   const [schoolQuestions, setSchoolQuestions] = useState<string[]>([]);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [schoolName, setSchoolName] = useState("청심국제고등학교");
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   
   const { 
     transcript, 
@@ -146,7 +148,10 @@ const CommonInterview = () => {
       loadSchoolQuestions();
     } else if (desiredSchool === 'cheongshim') {
       // Use default questions for cheongshim
-      setQuestion(getRandomQuestion());
+      setSchoolQuestions(COMMON_QUESTIONS);
+      const randomIndex = Math.floor(Math.random() * COMMON_QUESTIONS.length);
+      setCurrentQuestionIndex(randomIndex);
+      setQuestion(COMMON_QUESTIONS[randomIndex]);
       setSchoolName("청심국제고등학교");
     }
   }, [desiredSchool, customSchoolInfo]);
@@ -177,12 +182,16 @@ const CommonInterview = () => {
         setSchoolName(data.schoolName);
         // Set first question
         const randomIndex = Math.floor(Math.random() * data.questions.length);
+        setCurrentQuestionIndex(randomIndex);
         setQuestion(data.questions[randomIndex]);
       }
     } catch (error) {
       console.error('Failed to load school questions:', error);
       // Fallback to default questions
-      setQuestion(getRandomQuestion());
+      setSchoolQuestions(COMMON_QUESTIONS);
+      const randomIndex = Math.floor(Math.random() * COMMON_QUESTIONS.length);
+      setCurrentQuestionIndex(randomIndex);
+      setQuestion(COMMON_QUESTIONS[randomIndex]);
     } finally {
       setLoadingQuestions(false);
     }
@@ -203,36 +212,59 @@ const CommonInterview = () => {
         const schoolValue = (data as any).desired_school || 'cheongshim';
         setDesiredSchool(schoolValue);
         
-        // If custom school, fetch school info
+        // Set school name immediately for loading display
         if (schoolValue.startsWith('custom:')) {
           const customSchoolName = schoolValue.replace('custom:', '');
+          setSchoolName(customSchoolName);
           try {
             const { data: schoolData } = await supabase.functions.invoke('research-school', {
               body: { schoolName: customSchoolName }
             });
             if (schoolData?.schoolInfo) {
               setCustomSchoolInfo(schoolData.schoolInfo);
+              setSchoolName(schoolData.schoolInfo.name);
             }
           } catch (e) {
             console.error('Failed to load custom school info:', e);
           }
+        } else {
+          // Set school name from constants
+          setSchoolName(getSchoolLabel(schoolValue));
         }
       }
     } else {
       // Guest user - use default questions
-      setQuestion(getRandomQuestion());
+      setSchoolQuestions(COMMON_QUESTIONS);
+      setCurrentQuestionIndex(Math.floor(Math.random() * COMMON_QUESTIONS.length));
+      setQuestion(COMMON_QUESTIONS[0]);
     }
   };
 
   const handleNewQuestion = () => {
-    if (schoolQuestions.length > 0) {
-      // Use school-specific questions
-      const randomIndex = Math.floor(Math.random() * schoolQuestions.length);
-      setQuestion(schoolQuestions[randomIndex]);
-    } else {
-      // Fallback to default questions
-      setQuestion(getRandomQuestion());
-    }
+    const questions = schoolQuestions.length > 0 ? schoolQuestions : COMMON_QUESTIONS;
+    const randomIndex = Math.floor(Math.random() * questions.length);
+    setCurrentQuestionIndex(randomIndex);
+    setQuestion(questions[randomIndex]);
+    resetQuestionState();
+  };
+
+  const handlePrevQuestion = () => {
+    const questions = schoolQuestions.length > 0 ? schoolQuestions : COMMON_QUESTIONS;
+    const newIndex = currentQuestionIndex > 0 ? currentQuestionIndex - 1 : questions.length - 1;
+    setCurrentQuestionIndex(newIndex);
+    setQuestion(questions[newIndex]);
+    resetQuestionState();
+  };
+
+  const handleNextQuestion = () => {
+    const questions = schoolQuestions.length > 0 ? schoolQuestions : COMMON_QUESTIONS;
+    const newIndex = currentQuestionIndex < questions.length - 1 ? currentQuestionIndex + 1 : 0;
+    setCurrentQuestionIndex(newIndex);
+    setQuestion(questions[newIndex]);
+    resetQuestionState();
+  };
+
+  const resetQuestionState = () => {
     setAnswer("");
     setFeedback("");
     setScore(null);
@@ -913,22 +945,43 @@ const CommonInterview = () => {
               <div>
                 <CardTitle className="text-2xl">공통 면접 질문</CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {schoolName} 면접
+                  {schoolName} 면접 {!loadingQuestions && schoolQuestions.length > 0 && `(${currentQuestionIndex + 1}/${schoolQuestions.length})`}
                 </p>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleNewQuestion}
-                disabled={loadingQuestions}
-              >
-                {loadingQuestions ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                )}
-                새 질문
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handlePrevQuestion}
+                  disabled={loadingQuestions}
+                  title="이전 질문"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleNextQuestion}
+                  disabled={loadingQuestions}
+                  title="다음 질문"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNewQuestion}
+                  disabled={loadingQuestions}
+                  title="랜덤 질문"
+                >
+                  {loadingQuestions ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                  )}
+                  랜덤
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="p-6 bg-muted rounded-lg mb-6">
