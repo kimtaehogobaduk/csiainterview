@@ -285,6 +285,7 @@ export type Database = {
         Row: {
           ai_model: string | null
           created_at: string | null
+          desired_school: string | null
           email: string
           enable_camera: boolean | null
           essay_question_count: number | null
@@ -296,6 +297,7 @@ export type Database = {
         Insert: {
           ai_model?: string | null
           created_at?: string | null
+          desired_school?: string | null
           email: string
           enable_camera?: boolean | null
           essay_question_count?: number | null
@@ -307,6 +309,7 @@ export type Database = {
         Update: {
           ai_model?: string | null
           created_at?: string | null
+          desired_school?: string | null
           email?: string
           enable_camera?: boolean | null
           essay_question_count?: number | null

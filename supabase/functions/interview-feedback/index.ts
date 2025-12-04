@@ -6,6 +6,54 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// School information for customized prompts
+const SCHOOL_INFO: Record<string, { name: string; focus: string }> = {
+  cheongshim: {
+    name: '청심국제고등학교',
+    focus: 'ACG 교육 철학에 대한 이해, 글로벌 리더십, 기숙사 생활 적응력, 봉사정신'
+  },
+  hana: {
+    name: '하나고등학교',
+    focus: '자기주도학습 능력, 창의적 문제해결력, 하나정신(정직, 봉사, 창의)에 대한 이해'
+  },
+  sangsan: {
+    name: '상산고등학교',
+    focus: '수학·과학 탐구 능력, 논리적 사고력, 연구에 대한 열정, 학문적 호기심'
+  },
+  minsa: {
+    name: '민족사관고등학교',
+    focus: '민족정신과 정체성, 한국 문화에 대한 이해, 글로벌 시각, 리더십'
+  },
+  daewon: {
+    name: '대원외국어고등학교',
+    focus: '외국어 능력, 국제 감각, 문화적 다양성 이해, 의사소통 능력'
+  },
+  daeil: {
+    name: '대일외국어고등학교',
+    focus: '외국어 학습 경험, 인성, 국제 이해, 자기주도성'
+  },
+  myungduk: {
+    name: '명덕외국어고등학교',
+    focus: '창의성, 외국어 능력, 글로벌 마인드, 학업 열정'
+  },
+  gyeonggi: {
+    name: '경기외국어고등학교',
+    focus: '외국어 학습 동기, 국제 이슈 관심, 다문화 이해, 학업 계획'
+  },
+  busan: {
+    name: '부산국제고등학교',
+    focus: 'IB 교육에 대한 이해, 국제적 감각, 비판적 사고, 학업 열정'
+  },
+  incheon: {
+    name: '인천외국어고등학교',
+    focus: '외국어 능력, 국제 감각, 자기주도학습, 진로 계획'
+  },
+  other: {
+    name: '자율형 사립고/외국어고',
+    focus: '자기주도학습 능력, 진로 목표, 학업 열정, 인성'
+  }
+};
+
 // Input validation schema
 const requestSchema = z.object({
   question: z.string().trim().min(1).max(1000),
@@ -14,6 +62,7 @@ const requestSchema = z.object({
   type: z.enum(['common', 'essay_based', 'common_audio', 'essay_based_audio']),
   isFollowUp: z.boolean().optional(),
   model: z.string().optional(),
+  school: z.string().optional(),
   audioMetrics: z.object({
     wordsPerMinute: z.number().optional(),
     wordCount: z.number().optional(),
@@ -39,7 +88,7 @@ serve(async (req) => {
       );
     }
     
-    const { question, answer, essay, type, isFollowUp, model, audioMetrics, videoFrame } = validationResult.data;
+    const { question, answer, essay, type, isFollowUp, model, school, audioMetrics, videoFrame } = validationResult.data;
 
     if (!question || !answer) {
       throw new Error('질문과 답변은 필수입니다.');
@@ -50,11 +99,16 @@ serve(async (req) => {
       throw new Error('API 키가 설정되지 않았습니다.');
     }
 
+    // Get school-specific information
+    const schoolInfo = SCHOOL_INFO[school || 'cheongshim'] || SCHOOL_INFO['cheongshim'];
+
     let systemPrompt = '';
     let userPrompt = '';
 
     if (type === 'common' || type === 'common_audio') {
-      systemPrompt = `당신은 청심국제고등학교의 따뜻하고 격려적인 면접관입니다. 학생의 노력을 인정하며 100점 만점으로 공정하게 평가합니다.
+      systemPrompt = `당신은 ${schoolInfo.name}의 따뜻하고 격려적인 면접관입니다. 학생의 노력을 인정하며 100점 만점으로 공정하게 평가합니다.
+
+${schoolInfo.name}에서 중요시하는 역량: ${schoolInfo.focus}
 
 ${isFollowUp ? `이것은 추가 질문에 대한 답변입니다. 학생이 이전 피드백을 바탕으로 더 깊이 있는 답변을 할 수 있도록 새로운 추가 질문을 1개만 제시해주세요.` : ''}
 
@@ -105,6 +159,7 @@ ${videoFrame ? `
 - 성의있고 일반적인 답변은 60-75점대 부여
 - 조금이라도 구체성이 있으면 70점대 중후반 부여
 - 학생을 격려하되 개선점은 명확히 제시
+- ${schoolInfo.name}의 특성과 연결되는 답변은 추가로 인정
 
 ===================
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -148,7 +203,9 @@ ${type === 'common_audio' && audioMetrics ? `
 
 이 답변에 대해 엄격하게 점수와 피드백 부탁드립니다.`;
     } else {
-      systemPrompt = `당신은 청심국제고등학교의 따뜻하고 격려적인 면접관입니다. 자기소개서를 읽고 학생의 노력을 인정하며 100점 만점으로 공정하게 평가합니다.
+      systemPrompt = `당신은 ${schoolInfo.name}의 따뜻하고 격려적인 면접관입니다. 자기소개서를 읽고 학생의 노력을 인정하며 100점 만점으로 공정하게 평가합니다.
+
+${schoolInfo.name}에서 중요시하는 역량: ${schoolInfo.focus}
 
 ${isFollowUp ? `이것은 추가 질문에 대한 답변입니다. 학생이 이전 피드백을 바탕으로 더 깊이 있는 답변을 할 수 있도록 새로운 추가 질문을 1개만 제시해주세요.` : ''}
 
@@ -200,6 +257,7 @@ ${videoFrame ? `
 - 성의있고 일반적인 답변은 60-75점대 부여
 - 조금이라도 구체성이 있으면 70점대 중후반 부여
 - 학생을 격려하되 개선점은 명확히 제시
+- ${schoolInfo.name}의 특성과 연결되는 답변은 추가로 인정
 
 ===================
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -244,7 +302,7 @@ ${essay}
 이 답변에 대해 점수와 피드백 부탁드립니다.`;
     }
 
-    console.log('Calling AI with prompt...');
+    console.log('Calling AI with prompt for school:', school);
 
     // Check if model supports temperature parameter
     const selectedModel = model || 'google/gemini-2.5-flash';
