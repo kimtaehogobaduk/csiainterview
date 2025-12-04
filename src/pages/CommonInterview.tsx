@@ -120,6 +120,7 @@ const CommonInterview = () => {
     score: number | null;
   }>>([]);
   const [selectedModel, setSelectedModel] = useState("google/gemini-2.5-flash");
+  const [desiredSchool, setDesiredSchool] = useState("cheongshim");
   
   const { 
     transcript, 
@@ -141,13 +142,14 @@ const CommonInterview = () => {
     if (user) {
       const { data, error } = await supabase
         .from('profiles')
-        .select('ai_model, enable_camera')
+        .select('ai_model, enable_camera, desired_school')
         .eq('id', user.id)
         .single();
       
       if (data && !error) {
         setSelectedModel(data.ai_model || 'google/gemini-2.5-flash');
         setEnableCamera(data.enable_camera || false);
+        setDesiredSchool((data as any).desired_school || 'cheongshim');
       }
     }
   };
@@ -208,7 +210,8 @@ const CommonInterview = () => {
             answer: followUpAnswer,
             type: 'common',
             isFollowUp: true,
-            model: selectedModel
+            model: selectedModel,
+            school: desiredSchool
           }),
         }
       );
@@ -410,6 +413,7 @@ const CommonInterview = () => {
             answer: transcript,
             type: 'common_audio',
             model: selectedModel,
+            school: desiredSchool,
             audioMetrics: {
               wordsPerMinute,
               wordCount,

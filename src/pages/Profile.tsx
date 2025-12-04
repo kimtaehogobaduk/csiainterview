@@ -14,6 +14,7 @@ import type { User as SupabaseUser } from "@supabase/supabase-js";
 import Footer from "@/components/Footer";
 import ModelSelector from "@/components/ModelSelector";
 import ProfileCustomization from "@/components/ProfileCustomization";
+import { SCHOOLS } from "@/constants/schools";
 
 interface Profile {
   full_name: string;
@@ -22,6 +23,7 @@ interface Profile {
   essay_question_count: number;
   mileage?: number;
   enable_camera?: boolean;
+  desired_school?: string;
 }
 
 interface Essay {
@@ -52,13 +54,14 @@ interface SavedQuestion {
 const Profile = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [profile, setProfile] = useState<Profile>({ 
+const [profile, setProfile] = useState<Profile>({ 
     full_name: "", 
     email: "",
     ai_model: "google/gemini-2.5-flash",
     essay_question_count: 10,
     mileage: 0,
-    enable_camera: false
+    enable_camera: false,
+    desired_school: "cheongshim"
   });
   const [essays, setEssays] = useState<Essay[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -91,7 +94,7 @@ const Profile = () => {
   const loadProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from("profiles")
-      .select("full_name, email, ai_model, essay_question_count, mileage, enable_camera")
+      .select("full_name, email, ai_model, essay_question_count, mileage, enable_camera, desired_school")
       .eq("id", userId)
       .single();
 
@@ -106,7 +109,8 @@ const Profile = () => {
       ai_model: data.ai_model || "google/gemini-2.5-flash",
       essay_question_count: data.essay_question_count || 10,
       mileage: data.mileage || 0,
-      enable_camera: data.enable_camera || false
+      enable_camera: data.enable_camera || false,
+      desired_school: (data as any).desired_school || "cheongshim"
     });
   };
 
@@ -196,7 +200,8 @@ const Profile = () => {
           full_name: profile.full_name,
           ai_model: profile.ai_model,
           essay_question_count: profile.essay_question_count,
-          enable_camera: profile.enable_camera
+          enable_camera: profile.enable_camera,
+          desired_school: profile.desired_school
         })
         .eq("id", user.id);
 
@@ -414,6 +419,19 @@ const Profile = () => {
                       value={profile.full_name}
                       onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>희망 학교</Label>
+                    <select
+                      value={profile.desired_school}
+                      onChange={(e) => setProfile({ ...profile, desired_school: e.target.value })}
+                      className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      {SCHOOLS.map(school => (
+                        <option key={school.value} value={school.value}>{school.label}</option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-muted-foreground">면접 질문과 피드백이 학교 특성에 맞게 조정됩니다</p>
                   </div>
                   <div className="space-y-2">
                     <Label>이메일</Label>

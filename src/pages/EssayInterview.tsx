@@ -125,6 +125,7 @@ const EssayInterview = () => {
   }>>([]);
   const [selectedModel, setSelectedModel] = useState("google/gemini-2.5-flash");
   const [questionCount, setQuestionCount] = useState(10);
+  const [desiredSchool, setDesiredSchool] = useState("cheongshim");
   
   const { 
     transcript, 
@@ -158,7 +159,7 @@ const EssayInterview = () => {
     if (user) {
       const { data, error } = await supabase
         .from('profiles')
-        .select('ai_model, essay_question_count, enable_camera')
+        .select('ai_model, essay_question_count, enable_camera, desired_school')
         .eq('id', user.id)
         .single();
       
@@ -166,6 +167,7 @@ const EssayInterview = () => {
         setSelectedModel(data.ai_model || 'google/gemini-2.5-flash');
         setQuestionCount(data.essay_question_count || 10);
         setEnableCamera(data.enable_camera || false);
+        setDesiredSchool((data as any).desired_school || 'cheongshim');
       }
     }
   };
@@ -238,7 +240,7 @@ const EssayInterview = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-questions', {
-        body: { essay: savedEssay, count: questionCount }
+        body: { essay: savedEssay, count: questionCount, school: desiredSchool }
       });
 
       if (error) throw error;
@@ -291,6 +293,7 @@ const EssayInterview = () => {
             essay: savedEssay,
             type: 'essay_based_audio',
             model: selectedModel,
+            school: desiredSchool,
             audioMetrics: {
               wordsPerMinute,
               wordCount,
@@ -522,7 +525,8 @@ const EssayInterview = () => {
             essay: savedEssay,
             type: 'essay_based',
             isFollowUp: true,
-            model: selectedModel
+            model: selectedModel,
+            school: desiredSchool
           }),
         }
       );
