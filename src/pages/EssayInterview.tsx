@@ -126,6 +126,7 @@ const EssayInterview = () => {
   const [selectedModel, setSelectedModel] = useState("google/gemini-2.5-flash");
   const [questionCount, setQuestionCount] = useState(10);
   const [desiredSchool, setDesiredSchool] = useState("cheongshim");
+  const [customSchoolInfo, setCustomSchoolInfo] = useState<any>(null);
   
   const { 
     transcript, 
@@ -167,7 +168,23 @@ const EssayInterview = () => {
         setSelectedModel(data.ai_model || 'google/gemini-2.5-flash');
         setQuestionCount(data.essay_question_count || 10);
         setEnableCamera(data.enable_camera || false);
-        setDesiredSchool((data as any).desired_school || 'cheongshim');
+        const schoolValue = (data as any).desired_school || 'cheongshim';
+        setDesiredSchool(schoolValue);
+        
+        // If custom school, fetch school info
+        if (schoolValue.startsWith('custom:')) {
+          const customSchoolName = schoolValue.replace('custom:', '');
+          try {
+            const { data: schoolData } = await supabase.functions.invoke('research-school', {
+              body: { schoolName: customSchoolName }
+            });
+            if (schoolData?.schoolInfo) {
+              setCustomSchoolInfo(schoolData.schoolInfo);
+            }
+          } catch (e) {
+            console.error('Failed to load custom school info:', e);
+          }
+        }
       }
     }
   };
@@ -240,7 +257,17 @@ const EssayInterview = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-questions', {
-        body: { essay: savedEssay, count: questionCount, school: desiredSchool }
+        body: { 
+          essay: savedEssay, 
+          count: questionCount, 
+          school: desiredSchool,
+          customSchoolInfo: customSchoolInfo ? {
+            name: customSchoolInfo.name,
+            keywords: customSchoolInfo.keywords,
+            characteristics: customSchoolInfo.characteristics,
+            interviewFocus: customSchoolInfo.interviewFocus
+          } : undefined
+        }
       });
 
       if (error) throw error;
@@ -294,6 +321,10 @@ const EssayInterview = () => {
             type: 'essay_based_audio',
             model: selectedModel,
             school: desiredSchool,
+            customSchoolInfo: customSchoolInfo ? {
+              name: customSchoolInfo.name,
+              interviewFocus: customSchoolInfo.interviewFocus
+            } : undefined,
             audioMetrics: {
               wordsPerMinute,
               wordCount,
