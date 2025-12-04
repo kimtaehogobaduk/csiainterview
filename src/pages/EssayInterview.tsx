@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Mic, Send, FileText, CheckCircle, RefreshCw, Square, Bookmark } from "lucide-react";
+import { ArrowLeft, Mic, Send, FileText, CheckCircle, RefreshCw, Square, Bookmark, Copy } from "lucide-react";
 import Footer from "@/components/Footer";
 import FormattedFeedback from "@/components/FormattedFeedback";
 import AudioAnalysisChart from "@/components/AudioAnalysisChart";
@@ -719,6 +719,22 @@ const EssayInterview = () => {
     }
   };
 
+  const handleCopyAllQuestions = async () => {
+    if (questions.length === 0) {
+      toast.error('복사할 질문이 없습니다.');
+      return;
+    }
+
+    const questionsText = questions.map((q, i) => `${i + 1}. ${q}`).join('\n\n');
+    
+    try {
+      await navigator.clipboard.writeText(questionsText);
+      toast.success(`${questions.length}개의 질문이 복사되었습니다!`);
+    } catch (error) {
+      toast.error('복사에 실패했습니다.');
+    }
+  };
+
   const handleSaveQuestion = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -1026,15 +1042,25 @@ const EssayInterview = () => {
                             다음 질문
                           </Button>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleRefreshQuestions}
-                          disabled={loading}
-                        >
-                          <RefreshCw className="h-4 w-4 mr-2" />
-                          새 질문
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleCopyAllQuestions}
+                          >
+                            <Copy className="h-4 w-4 mr-2" />
+                            모두 복사
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleRefreshQuestions}
+                            disabled={loading}
+                          >
+                            <RefreshCw className="h-4 w-4 mr-2" />
+                            새 질문
+                          </Button>
+                        </div>
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
