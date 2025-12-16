@@ -16,16 +16,12 @@ const UpdateAnnouncementDialog = () => {
   const [open, setOpen] = useState(false);
   const [canClose, setCanClose] = useState(false);
   const [timeLeft, setTimeLeft] = useState(5);
-  const [showEmergencyNotice, setShowEmergencyNotice] = useState(false);
 
   useEffect(() => {
     // Check if user has seen this announcement
     const hasSeenAnnouncement = localStorage.getItem("hasSeenV4Announcement");
     if (!hasSeenAnnouncement) {
       setOpen(true);
-    } else {
-      // If already seen first announcement, show emergency notice directly
-      setShowEmergencyNotice(true);
     }
   }, []);
 
@@ -48,14 +44,12 @@ const UpdateAnnouncementDialog = () => {
     if (canClose) {
       localStorage.setItem("hasSeenV4Announcement", "true");
       setOpen(false);
-      setShowEmergencyNotice(true);
     }
   };
 
   const handleFeatureClick = (path: string) => {
     localStorage.setItem("hasSeenV4Announcement", "true");
     setOpen(false);
-    setShowEmergencyNotice(true);
     navigate(path);
   };
 
@@ -206,7 +200,7 @@ const UpdateAnnouncementDialog = () => {
         </DialogContent>
       </Dialog>
 
-      <EmergencyNoticeDialog shouldOpen={showEmergencyNotice} />
+      <EmergencyNoticeDialog />
     </>
   );
 };
