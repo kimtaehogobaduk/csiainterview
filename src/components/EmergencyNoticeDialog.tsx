@@ -8,23 +8,18 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import sorryImage from "@/assets/sorry-image.png";
 
-interface EmergencyNoticeDialogProps {
-  shouldOpen: boolean;
-}
-
-const EmergencyNoticeDialog = ({ shouldOpen }: EmergencyNoticeDialogProps) => {
+const EmergencyNoticeDialog = () => {
   const [open, setOpen] = useState(false);
   const [canClose, setCanClose] = useState(false);
   const [timeLeft, setTimeLeft] = useState(10);
 
   useEffect(() => {
-    if (shouldOpen) {
-      const hasSeenNotice = localStorage.getItem("hasSeenEmergencyNotice");
-      if (!hasSeenNotice) {
-        setOpen(true);
-      }
+    // 무조건 체크 - 로그인 여부와 상관없이
+    const hasSeenNotice = localStorage.getItem("hasSeenEmergencyNotice");
+    if (!hasSeenNotice) {
+      setOpen(true);
     }
-  }, [shouldOpen]);
+  }, []);
 
   useEffect(() => {
     if (open && timeLeft > 0) {
