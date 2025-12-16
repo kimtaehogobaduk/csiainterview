@@ -59,42 +59,10 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      // First try normal login
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
-      if (error) {
-        // If login failed, check if this is a migrating user
-        if (error.message.includes('Invalid login credentials')) {
-          // Try migrate-login for users from old system
-          const { data: migrateResult, error: migrateError } = await supabase.functions.invoke('migrate-login', {
-            body: { email, password }
-          });
-
-          if (migrateError) throw migrateError;
-
-          if (migrateResult?.success) {
-            // Account created, now log in
-            const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({ 
-              email, 
-              password 
-            });
-            
-            if (loginError) throw loginError;
-            
-            toast.success("계정이 생성되고 기존 데이터가 복원되었습니다!");
-            navigate("/");
-            return;
-          } else if (migrateResult?.needsSignup) {
-            // Not a migrating user, show original error
-            throw error;
-          } else {
-            throw new Error(migrateResult?.error || '로그인에 실패했습니다.');
-          }
-        }
-        throw error;
-      }
+      if (error) throw error;
       
-      // Normal login success
       if (data.user) {
         const { data: profile } = await supabase
           .from('profiles')
