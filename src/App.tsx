@@ -13,6 +13,7 @@ import Community from "./pages/Community";
 import Leaderboard from "./pages/Leaderboard";
 import Shop from "./pages/Shop";
 import Onboarding from "./pages/Onboarding";
+import DataMigration from "./pages/DataMigration";
 import NotFound from "./pages/NotFound";
 import UpdateAnnouncementDialog from "./components/UpdateAnnouncementDialog";
 
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/community" element={<Community />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/shop" element={<Shop />} />
+          <Route path="/data-migration" element={<DataMigration />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
