@@ -2,3 +2,33 @@ project_id = "twkpdgrdfroqcxmhmzpz"
 
 [functions.setup-admin]
 verify_jwt = false
+
+[functions.generate-common-questions]
+verify_jwt = false
+
+[functions.generate-questions]
+verify_jwt = false
+
+[functions.interview-feedback]
+verify_jwt = false
+
+[functions.essay-check]
+verify_jwt = false
+
+[functions.research-school]
+verify_jwt = false
+
+[functions.expand-questions]
+verify_jwt = false
+
+[functions.audio-analysis]
+verify_jwt = false
+
+[functions.content-moderation]
+verify_jwt = false
+
+[functions.migrate-login]
+verify_jwt = false
+
+[functions.import-migration-data]
+verify_jwt = false
