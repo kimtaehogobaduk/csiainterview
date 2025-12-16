@@ -428,6 +428,57 @@ export type Database = {
           },
         ]
       }
+      user_migrations: {
+        Row: {
+          ai_model: string | null
+          created_at: string | null
+          desired_school: string | null
+          email: string
+          enable_camera: boolean | null
+          essay_question_count: number | null
+          full_name: string | null
+          id: string
+          migrated: boolean | null
+          migrated_at: string | null
+          mileage: number | null
+          new_user_id: string | null
+          old_user_id: string
+          role: string | null
+        }
+        Insert: {
+          ai_model?: string | null
+          created_at?: string | null
+          desired_school?: string | null
+          email: string
+          enable_camera?: boolean | null
+          essay_question_count?: number | null
+          full_name?: string | null
+          id?: string
+          migrated?: boolean | null
+          migrated_at?: string | null
+          mileage?: number | null
+          new_user_id?: string | null
+          old_user_id: string
+          role?: string | null
+        }
+        Update: {
+          ai_model?: string | null
+          created_at?: string | null
+          desired_school?: string | null
+          email?: string
+          enable_camera?: boolean | null
+          essay_question_count?: number | null
+          full_name?: string | null
+          id?: string
+          migrated?: boolean | null
+          migrated_at?: string | null
+          mileage?: number | null
+          new_user_id?: string | null
+          old_user_id?: string
+          role?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
