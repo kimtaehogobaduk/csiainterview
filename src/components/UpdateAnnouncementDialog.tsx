@@ -200,7 +200,7 @@ const UpdateAnnouncementDialog = () => {
         </DialogContent>
       </Dialog>
 
-      <EmergencyNoticeDialog />
+      
     </>
   );
 };
