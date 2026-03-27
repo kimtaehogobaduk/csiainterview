@@ -494,7 +494,7 @@ const [profile, setProfile] = useState<Profile>({
                         <Label className="text-sm">학교 이름 직접 입력</Label>
                         <div className="flex gap-2">
                           <Input
-                            value={customSchoolName || profile.desired_school?.replace('custom:', '') || ''}
+                            value={customSchoolName}
                             onChange={(e) => setCustomSchoolName(e.target.value)}
                             placeholder="예: OO고등학교"
                             className="flex-1"
