@@ -108,29 +108,56 @@ serve(async (req) => {
       ? `면접 질문: ${question}\n\n답변 텍스트: "${transcription.text}"\n\n위 답변을 음성 분석 데이터와 함께 평가해주세요.`
       : `공통 면접 질문: ${question}\n\n답변 텍스트: "${transcription.text}"\n\n위 답변을 음성 분석 데이터와 함께 평가해주세요.`;
 
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        stream: true,
-        temperature: 0.7,
-        max_tokens: 1000,
-      }),
-    });
+    const aiRequestBody = {
+      model: 'google/gemini-2.5-flash',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      stream: true,
+      temperature: 0.7,
+      max_tokens: 1000,
+    };
+
+    let aiResponse: Response;
+    
+    if (LOVABLE_API_KEY) {
+      aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(aiRequestBody),
+      });
+
+      if (aiResponse.status === 402 && CEREBRAS_API_KEY) {
+        console.log('Lovable AI 크레딧 소진, Cerebras로 전환합니다...');
+        aiResponse = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${CEREBRAS_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ ...aiRequestBody, model: 'llama-4-scout-17b-16e-instruct' }),
+        });
+      }
+    } else {
+      aiResponse = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${CEREBRAS_API_KEY!}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ...aiRequestBody, model: 'llama-4-scout-17b-16e-instruct' }),
+      });
+    }
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error('AI Gateway error:', aiResponse.status, errorText);
+      console.error('AI API error:', aiResponse.status, errorText);
       return new Response(
-        JSON.stringify({ error: 'AI Gateway error', details: errorText }),
+        JSON.stringify({ error: 'AI API error', details: errorText }),
         { status: aiResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

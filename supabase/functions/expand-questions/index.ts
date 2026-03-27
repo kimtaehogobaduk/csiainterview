@@ -43,24 +43,51 @@ serve(async (req) => {
 반드시 정확히 200개의 질문을 JSON 배열 형식으로 반환해주세요:
 ["질문1", "질문2", ..., "질문200"]`;
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { 
-            role: 'user', 
-            content: `기존 질문 목록:\n${JSON.stringify(existingQuestions, null, 2)}\n\n이를 참고하여 200개의 새로운 질문을 생성해주세요.` 
-          }
-        ],
-        temperature: 0.8,
-      }),
-    });
+    const requestBody = {
+      model: 'google/gemini-2.5-flash',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { 
+          role: 'user', 
+          content: `기존 질문 목록:\n${JSON.stringify(existingQuestions, null, 2)}\n\n이를 참고하여 200개의 새로운 질문을 생성해주세요.` 
+        }
+      ],
+      temperature: 0.8,
+    };
+
+    let response: Response;
+    
+    if (LOVABLE_API_KEY) {
+      response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (response.status === 402 && CEREBRAS_API_KEY) {
+        console.log('Lovable AI 크레딧 소진, Cerebras로 전환합니다...');
+        response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${CEREBRAS_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ ...requestBody, model: 'llama-4-scout-17b-16e-instruct' }),
+        });
+      }
+    } else {
+      response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${CEREBRAS_API_KEY!}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ...requestBody, model: 'llama-4-scout-17b-16e-instruct' }),
+      });
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
