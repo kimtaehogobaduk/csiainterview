@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Sparkles, MessageSquare, User, ShoppingBag, Video, Settings, Camera, FileText, History } from "lucide-react";
-import EmergencyNoticeDialog from "./EmergencyNoticeDialog";
+
 
 const UpdateAnnouncementDialog = () => {
   const navigate = useNavigate();
@@ -200,7 +200,7 @@ const UpdateAnnouncementDialog = () => {
         </DialogContent>
       </Dialog>
 
-      <EmergencyNoticeDialog />
+      
     </>
   );
 };
