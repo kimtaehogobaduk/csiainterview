@@ -99,7 +99,8 @@ serve(async (req) => {
     }
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
+    const CEREBRAS_API_KEY = Deno.env.get('CEREBRAS_API_KEY');
+    if (!LOVABLE_API_KEY && !CEREBRAS_API_KEY) {
       throw new Error('API 키가 설정되지 않았습니다.');
     }
 
