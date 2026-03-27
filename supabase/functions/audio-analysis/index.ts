@@ -23,12 +23,13 @@ serve(async (req) => {
 
     const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    const CEREBRAS_API_KEY = Deno.env.get('CEREBRAS_API_KEY');
     
     if (!OPENAI_API_KEY) {
       throw new Error('OPENAI_API_KEY is not configured');
     }
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
+    if (!LOVABLE_API_KEY && !CEREBRAS_API_KEY) {
+      throw new Error('AI API 키가 설정되지 않았습니다.');
     }
 
     console.log('Analyzing audio for question:', question);
