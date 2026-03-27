@@ -99,7 +99,8 @@ serve(async (req) => {
     }
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
+    const CEREBRAS_API_KEY = Deno.env.get('CEREBRAS_API_KEY');
+    if (!LOVABLE_API_KEY && !CEREBRAS_API_KEY) {
       throw new Error('API 키가 설정되지 않았습니다.');
     }
 
@@ -348,14 +349,42 @@ ${essay}
       requestBody.temperature = 0.7;
     }
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-    });
+    let response: Response;
+    
+    if (LOVABLE_API_KEY) {
+      response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      // Fallback to Cerebras on 402 (credits exhausted)
+      if (response.status === 402 && CEREBRAS_API_KEY) {
+        console.log('Lovable AI 크레딧 소진, Cerebras로 전환합니다...');
+        const cerebrasBody = { ...requestBody, model: 'llama-4-scout-17b-16e-instruct' };
+        response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${CEREBRAS_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(cerebrasBody),
+        });
+      }
+    } else {
+      const cerebrasBody = { ...requestBody, model: 'llama-4-scout-17b-16e-instruct' };
+      response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${CEREBRAS_API_KEY!}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(cerebrasBody),
+      });
+    }
 
     if (!response.ok) {
       const errorText = await response.text();

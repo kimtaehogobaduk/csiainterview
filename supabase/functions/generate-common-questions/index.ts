@@ -83,7 +83,8 @@ serve(async (req) => {
     const { school, customSchoolInfo, count = 30 } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
+    const CEREBRAS_API_KEY = Deno.env.get('CEREBRAS_API_KEY');
+    if (!LOVABLE_API_KEY && !CEREBRAS_API_KEY) {
       throw new Error('API 키가 설정되지 않았습니다.');
     }
 
@@ -130,21 +131,48 @@ serve(async (req) => {
 반드시 정확히 ${count}개의 질문을 생성하세요.
 각 질문은 줄바꿈으로 구분해주세요. 번호는 붙이지 마세요.`;
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: `${schoolInfo.name} 면접을 위한 공통 질문 ${count}개를 생성해주세요.` }
-        ],
-        temperature: 0.8,
-      }),
-    });
+    const requestBody = {
+      model: 'google/gemini-2.5-flash',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `${schoolInfo.name} 면접을 위한 공통 질문 ${count}개를 생성해주세요.` }
+      ],
+      temperature: 0.8,
+    };
+
+    let response: Response;
+    
+    if (LOVABLE_API_KEY) {
+      response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (response.status === 402 && CEREBRAS_API_KEY) {
+        console.log('Lovable AI 크레딧 소진, Cerebras로 전환합니다...');
+        response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${CEREBRAS_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ ...requestBody, model: 'llama-4-scout-17b-16e-instruct' }),
+        });
+      }
+    } else {
+      response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${CEREBRAS_API_KEY!}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ...requestBody, model: 'llama-4-scout-17b-16e-instruct' }),
+      });
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
