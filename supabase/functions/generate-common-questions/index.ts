@@ -5,23 +5,132 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const SCHOOL_INFO: Record<string, { name: string; keywords: string[]; focus: string; characteristics: string }> = {
+// Rich pre-built school info to avoid extra AI call for known schools
+const SCHOOL_INFO: Record<string, { name: string; keywords: string[]; focus: string; characteristics: string; detailedInfo: string }> = {
   cheongshim: {
     name: '청심국제고등학교',
     keywords: ['ACG 교육', '글로벌 리더', '기숙사', '가평', '건학 이념'],
     focus: 'ACG 교육 철학에 대한 이해, 글로벌 리더십, 기숙사 생활 적응력, 봉사정신',
-    characteristics: 'ACG(Academic, Character, Global) 교육 철학, 가평 위치, 3년 기숙사 생활'
+    characteristics: 'ACG(Academic, Character, Global) 교육 철학, 가평 위치, 3년 기숙사 생활',
+    detailedInfo: `청심국제고등학교는 경기도 가평에 위치한 자율형 사립고등학교입니다.
+교육 철학: ACG(Academic, Character, Global) 교육을 핵심으로 하며, 학문적 역량, 인성, 글로벌 역량을 균형있게 기릅니다.
+특별 프로그램: 3년 전원 기숙사 생활, 글로벌 리더십 프로그램, 봉사활동 필수, 건학 이념에 기반한 인성교육.
+인재상: 봉사정신과 글로벌 리더십을 갖춘 인재, ACG 교육 철학에 공감하는 학생.
+면접 중점: 지원 동기의 진정성, ACG 교육 철학 이해도, 기숙사 생활 적응력, 봉사 경험, 글로벌 시각.
+특별한 전통: 효정 문화, 참부모 교육, 자연 속 교육환경 활용.`
   },
-  hana: { name: '하나고등학교', keywords: ['자기주도학습', '창의융합', '하나정신', '전인교육'], focus: '자기주도학습 능력, 창의적 문제해결력, 하나정신(정직, 봉사, 창의)에 대한 이해', characteristics: '자기주도학습 중심, 창의융합 역량, 하나정신 강조' },
-  sangsan: { name: '상산고등학교', keywords: ['과학영재', '수학과학', '연구역량', 'STEM', '논리적 사고'], focus: '수학·과학 탐구 능력, 논리적 사고력, 연구에 대한 열정, 학문적 호기심', characteristics: '수학·과학 영재교육, 연구역량 강화, 전북 전주 위치' },
-  minsa: { name: '민족사관고등학교', keywords: ['민족정신', '한국학', '전통문화', '글로벌', '한국 정체성'], focus: '민족정신과 정체성, 한국 문화에 대한 이해, 글로벌 시각, 리더십', characteristics: '민족정신과 글로벌 역량 동시 강조, 한국학 교육, 강원 횡성 위치' },
-  daewon: { name: '대원외국어고등학교', keywords: ['외국어 교육', '국제화', '어학 역량', '글로벌 인재'], focus: '외국어 능력, 국제 감각, 문화적 다양성 이해, 의사소통 능력', characteristics: '뛰어난 외국어 능력과 국제적 감각, 서울 위치' },
-  daeil: { name: '대일외국어고등학교', keywords: ['외국어', '인성교육', '글로벌 역량'], focus: '외국어 학습 경험, 인성, 국제 이해, 자기주도성', characteristics: '외국어 능력과 인성 겸비, 글로벌 인재 양성' },
-  myungduk: { name: '명덕외국어고등학교', keywords: ['외국어', '창의인재', '글로벌 소양'], focus: '창의성, 외국어 능력, 글로벌 마인드, 학업 열정', characteristics: '창의적 사고와 글로벌 소양 강조' },
-  gyeonggi: { name: '경기외국어고등학교', keywords: ['외국어', '국제화', '다문화 이해'], focus: '외국어 학습 동기, 국제 이슈 관심, 다문화 이해, 학업 계획', characteristics: '경기 지역 대표 외국어 특성화 고등학교' },
-  busan: { name: '부산국제고등학교', keywords: ['국제화', 'IB 과정', '글로벌 리더', '비판적 사고'], focus: 'IB 교육에 대한 이해, 국제적 감각, 비판적 사고, 학업 열정', characteristics: 'IB 과정 운영, 글로벌 인재 양성, 부산 위치' },
-  incheon: { name: '인천외국어고등학교', keywords: ['외국어', '국제교류', '어학 역량'], focus: '외국어 능력, 국제 감각, 자기주도학습, 진로 계획', characteristics: '인천 지역 대표 외국어 특성화 고등학교' },
-  other: { name: '자율형 사립고/외국어고', keywords: ['자기주도학습', '창의성', '리더십', '학업 역량'], focus: '자기주도학습 능력, 진로 목표, 학업 열정, 인성', characteristics: '자기주도적 학습 능력과 창의적 인재 양성' }
+  hana: {
+    name: '하나고등학교',
+    keywords: ['자기주도학습', '창의융합', '하나정신', '전인교육'],
+    focus: '자기주도학습 능력, 창의적 문제해결력, 하나정신(정직, 봉사, 창의)에 대한 이해',
+    characteristics: '자기주도학습 중심, 창의융합 역량, 하나정신 강조',
+    detailedInfo: `하나고등학교는 서울에 위치한 자율형 사립고등학교입니다.
+교육 철학: '하나정신'(정직, 봉사, 창의)을 핵심 가치로 삼으며, 자기주도학습과 전인교육을 강조합니다.
+특별 프로그램: 자기주도학습 시스템, 창의융합 프로젝트, 멘토링 프로그램, 학생 자치활동.
+인재상: 자기주도적으로 학습하고, 창의적으로 문제를 해결하며, 공동체에 기여하는 인재.
+면접 중점: 자기주도학습 경험과 방법, 하나정신에 대한 이해, 창의적 문제해결 경험, 협업 능력.
+특별한 전통: 학생 주도의 학교 문화, 다양한 동아리 활동, 학술제.`
+  },
+  sangsan: {
+    name: '상산고등학교',
+    keywords: ['과학영재', '수학과학', '연구역량', 'STEM', '논리적 사고'],
+    focus: '수학·과학 탐구 능력, 논리적 사고력, 연구에 대한 열정, 학문적 호기심',
+    characteristics: '수학·과학 영재교육, 연구역량 강화, 전북 전주 위치',
+    detailedInfo: `상산고등학교는 전북 전주에 위치한 자율형 사립고등학교입니다.
+교육 철학: 수학·과학 중심의 심화 교육과 연구역량 강화를 통해 미래 과학기술 인재를 양성합니다.
+특별 프로그램: STEM 심화 교육, 연구 프로젝트, 수학·과학 올림피아드 준비, 대학 연계 프로그램.
+인재상: 논리적 사고력과 연구에 대한 열정을 갖춘 학생, 학문적 호기심이 강한 인재.
+면접 중점: 수학·과학 탐구 경험, 논리적 사고력, 연구 계획, 학문적 호기심과 열정.
+특별한 전통: 과학연구 발표회, 수학경시대회, R&E 프로그램.`
+  },
+  minsa: {
+    name: '민족사관고등학교',
+    keywords: ['민족정신', '한국학', '전통문화', '글로벌', '한국 정체성'],
+    focus: '민족정신과 정체성, 한국 문화에 대한 이해, 글로벌 시각, 리더십',
+    characteristics: '민족정신과 글로벌 역량 동시 강조, 한국학 교육, 강원 횡성 위치',
+    detailedInfo: `민족사관고등학교는 강원도 횡성에 위치한 자율형 사립고등학교입니다.
+교육 철학: 한국의 민족정신과 글로벌 역량을 동시에 갖춘 인재 양성을 목표로 합니다.
+특별 프로그램: 한국학 교육, 전통문화 체험, 글로벌 리더십 프로그램, 기숙사 생활, 학술 심화 과정.
+인재상: 한국 정체성을 바탕으로 세계를 이끌 수 있는 리더, 민족 문화에 자부심을 가진 글로벌 인재.
+면접 중점: 한국 문화와 역사에 대한 관심, 민족정신 이해, 리더십 경험, 글로벌 시각.
+특별한 전통: 한국학 심화, 전통예절 교육, 국제교류 프로그램.`
+  },
+  daewon: {
+    name: '대원외국어고등학교',
+    keywords: ['외국어 교육', '국제화', '어학 역량', '글로벌 인재'],
+    focus: '외국어 능력, 국제 감각, 문화적 다양성 이해, 의사소통 능력',
+    characteristics: '뛰어난 외국어 능력과 국제적 감각, 서울 위치',
+    detailedInfo: `대원외국어고등학교는 서울에 위치한 외국어고등학교입니다.
+교육 철학: 뛰어난 외국어 능력과 국제적 감각을 갖춘 글로벌 인재 양성을 목표로 합니다.
+특별 프로그램: 다양한 외국어 심화 과정, 국제교류, 외국어 토론대회, 해외 연수 프로그램.
+인재상: 외국어 능력이 뛰어나고 문화적 다양성을 이해하며 국제사회에 기여할 수 있는 인재.
+면접 중점: 외국어 학습 동기와 노력, 국제 감각, 다문화 이해, 의사소통 능력.`
+  },
+  daeil: {
+    name: '대일외국어고등학교',
+    keywords: ['외국어', '인성교육', '글로벌 역량'],
+    focus: '외국어 학습 경험, 인성, 국제 이해, 자기주도성',
+    characteristics: '외국어 능력과 인성 겸비, 글로벌 인재 양성',
+    detailedInfo: `대일외국어고등학교는 서울에 위치한 외국어고등학교입니다.
+교육 철학: 외국어 능력과 인성을 겸비한 글로벌 인재 양성을 목표로 합니다.
+특별 프로그램: 외국어 심화 교육, 인성교육 프로그램, 국제교류, 동아리 활동.
+인재상: 외국어 능력과 바른 인성을 갖추고 자기주도적으로 학습하는 학생.
+면접 중점: 외국어 학습 경험, 인성과 가치관, 국제 이해, 자기주도학습 능력.`
+  },
+  myungduk: {
+    name: '명덕외국어고등학교',
+    keywords: ['외국어', '창의인재', '글로벌 소양'],
+    focus: '창의성, 외국어 능력, 글로벌 마인드, 학업 열정',
+    characteristics: '창의적 사고와 글로벌 소양 강조',
+    detailedInfo: `명덕외국어고등학교는 서울에 위치한 외국어고등학교입니다.
+교육 철학: 창의적 사고와 글로벌 소양을 갖춘 인재 양성을 목표로 합니다.
+특별 프로그램: 외국어 심화, 창의융합 프로젝트, 글로벌 체험 프로그램.
+인재상: 창의적이고 외국어 능력이 뛰어나며 글로벌 마인드를 갖춘 학생.
+면접 중점: 창의성, 외국어 능력, 글로벌 마인드, 학업 열정과 계획.`
+  },
+  gyeonggi: {
+    name: '경기외국어고등학교',
+    keywords: ['외국어', '국제화', '다문화 이해'],
+    focus: '외국어 학습 동기, 국제 이슈 관심, 다문화 이해, 학업 계획',
+    characteristics: '경기 지역 대표 외국어 특성화 고등학교',
+    detailedInfo: `경기외국어고등학교는 경기도에 위치한 외국어고등학교입니다.
+교육 철학: 외국어 능력과 국제화 역량을 갖춘 인재 양성을 목표로 합니다.
+특별 프로그램: 외국어 심화 교육, 국제교류 프로그램, 다문화 이해 교육.
+인재상: 외국어에 열정이 있고 국제 이슈에 관심을 가진 학생.
+면접 중점: 외국어 학습 동기, 국제 이슈 관심도, 다문화 이해, 진로 계획.`
+  },
+  busan: {
+    name: '부산국제고등학교',
+    keywords: ['국제화', 'IB 과정', '글로벌 리더', '비판적 사고'],
+    focus: 'IB 교육에 대한 이해, 국제적 감각, 비판적 사고, 학업 열정',
+    characteristics: 'IB 과정 운영, 글로벌 인재 양성, 부산 위치',
+    detailedInfo: `부산국제고등학교는 부산에 위치한 국제고등학교입니다.
+교육 철학: IB(International Baccalaureate) 과정을 운영하며 국제적 감각과 비판적 사고력을 갖춘 글로벌 리더 양성을 목표로 합니다.
+특별 프로그램: IB Diploma Programme, 비판적 사고 교육, 국제교류, CAS(창의·활동·봉사) 활동.
+인재상: 비판적 사고력과 국제적 감각을 갖춘 학생, IB 교육에 대한 이해와 열정이 있는 인재.
+면접 중점: IB 교육과정 이해도, 비판적 사고 능력, 국제적 감각, 학업 열정과 계획.`
+  },
+  incheon: {
+    name: '인천외국어고등학교',
+    keywords: ['외국어', '국제교류', '어학 역량'],
+    focus: '외국어 능력, 국제 감각, 자기주도학습, 진로 계획',
+    characteristics: '인천 지역 대표 외국어 특성화 고등학교',
+    detailedInfo: `인천외국어고등학교는 인천에 위치한 외국어고등학교입니다.
+교육 철학: 외국어 능력과 국제 감각을 갖춘 인재 양성을 목표로 합니다.
+특별 프로그램: 외국어 심화 교육, 국제교류 프로그램, 어학 경시대회.
+인재상: 외국어에 뛰어나고 국제 감각을 갖추며 자기주도적으로 학습하는 학생.
+면접 중점: 외국어 능력, 국제 감각, 자기주도학습 경험, 진로 계획.`
+  },
+  other: {
+    name: '자율형 사립고/외국어고',
+    keywords: ['자기주도학습', '창의성', '리더십', '학업 역량'],
+    focus: '자기주도학습 능력, 진로 목표, 학업 열정, 인성',
+    characteristics: '자기주도적 학습 능력과 창의적 인재 양성',
+    detailedInfo: `자율형 사립고/외국어고는 자기주도적 학습 능력과 창의적 인재 양성을 목표로 합니다.
+교육 철학: 학생의 자율성과 창의성을 존중하며, 개성과 잠재력을 발휘할 수 있는 교육환경을 제공합니다.
+인재상: 자기주도적으로 학습하고 창의적으로 문제를 해결하며 리더십을 발휘하는 학생.
+면접 중점: 자기주도학습 능력, 진로 목표의 구체성, 학업 열정, 인성과 가치관.`
+  }
 };
 
 async function callAI(messages: Array<{role: string; content: string}>, temperature: number) {
@@ -72,30 +181,22 @@ async function callAI(messages: Array<{role: string; content: string}>, temperat
   return data.choices[0].message.content;
 }
 
-async function researchSchool(schoolName: string): Promise<string> {
-  console.log('Step 1: Researching school info for:', schoolName);
+async function getSchoolDetailedInfo(schoolKey: string, schoolInfo: any, customSchoolInfo: any): Promise<string> {
+  // For predefined schools, use pre-built detailed info (no AI call needed!)
+  if (!schoolKey.startsWith('custom:') && SCHOOL_INFO[schoolKey]) {
+    console.log('Using pre-built school info for:', schoolInfo.name);
+    return SCHOOL_INFO[schoolKey].detailedInfo;
+  }
 
-  const researchPrompt = `당신은 한국의 고등학교 입시 전문가입니다.
-"${schoolName}"에 대해 면접 질문 생성에 필요한 구체적인 정보를 조사해주세요.
+  // Only research custom/unknown schools via AI
+  console.log('Researching custom school:', schoolInfo.name);
+  const researchPrompt = `"${schoolInfo.name}"에 대해 면접 질문 생성에 필요한 정보를 간략히 조사해주세요.
+학교 유형, 교육 철학, 인재상, 면접 중점 사항을 5문장 이내로 요약해주세요.`;
 
-다음 내용을 포함해주세요:
-1. 학교의 정식 명칭과 유형 (자사고, 외고, 국제고, 과학고 등)
-2. 학교의 교육 철학과 핵심 가치
-3. 학교의 독특한 프로그램이나 커리큘럼 (예: IB, ACG, 특별 교과 등)
-4. 학교가 면접에서 중시하는 역량과 인재상
-5. 학교의 위치, 기숙사 여부, 특별한 전통
-6. 최근 입시 트렌드나 면접 경향
-7. 학교의 유명한 졸업생이나 성과
-
-가능한 한 구체적이고 정확한 정보를 제공해주세요. 알려진 학교라면 실제 정보를 바탕으로, 잘 알려지지 않은 학교라면 학교 유형을 추정하여 합리적인 정보를 제공해주세요.`;
-
-  const content = await callAI([
-    { role: 'system', content: '당신은 한국 고등학교 입시 전문가입니다. 구체적이고 정확한 학교 정보를 제공합니다.' },
+  return await callAI([
+    { role: 'system', content: '한국 고등학교 입시 전문가입니다. 간결하게 답변합니다.' },
     { role: 'user', content: researchPrompt }
   ], 0.3);
-
-  console.log('School research completed, length:', content.length);
-  return content;
 }
 
 serve(async (req) => {
@@ -106,8 +207,8 @@ serve(async (req) => {
   try {
     const { school, customSchoolInfo, count = 30 } = await req.json();
 
-    // Get base school info
     let schoolInfo;
+    let schoolKey = school;
     if (school.startsWith('custom:') && customSchoolInfo) {
       schoolInfo = {
         name: customSchoolInfo.name,
@@ -119,48 +220,35 @@ serve(async (req) => {
       schoolInfo = SCHOOL_INFO[school] || SCHOOL_INFO['cheongshim'];
     }
 
-    // Step 1: Research the school for detailed info
-    const schoolResearch = await researchSchool(schoolInfo.name);
+    // Get detailed info (instant for predefined schools, AI call only for custom)
+    const detailedInfo = await getSchoolDetailedInfo(schoolKey, schoolInfo, customSchoolInfo);
 
-    // Step 2: Generate questions using the researched info
-    console.log('Step 2: Generating questions with enriched school info for:', schoolInfo.name);
+    console.log('Generating questions for:', schoolInfo.name);
 
     const systemPrompt = `당신은 ${schoolInfo.name} 입학 면접 전문가입니다.
-아래는 AI가 조사한 "${schoolInfo.name}"에 대한 상세 정보입니다. 이 정보를 충분히 반영하여 면접 질문을 생성하세요.
 
-**AI 조사 학교 정보:**
-${schoolResearch}
-
-**추가 학교 정보:**
-- 핵심 키워드: ${schoolInfo.keywords.join(', ')}
-- 특성: ${schoolInfo.characteristics}
-- 면접 중점 사항: ${schoolInfo.focus}
+**학교 상세 정보:**
+${detailedInfo}
 
 **질문 생성 원칙:**
-1. 모든 질문은 "${schoolInfo.name}"에 맞게 작성 (예: "${schoolInfo.name}에 지원하게 된 동기는?")
-2. 위 조사 결과에서 나온 학교의 구체적인 프로그램, 교육 철학, 인재상을 직접 반영한 질문 포함
-3. 다음 카테고리별로 골고루 분배:
+1. 모든 질문은 "${schoolInfo.name}"에 맞게 작성
+2. 위 학교 정보의 구체적인 프로그램, 교육 철학, 인재상을 직접 반영
+3. 카테고리별 분배:
    - 지원 동기 및 학교 이해 (5~6개)
    - 학업 역량 및 학습 태도 (5~6개)
    - 인성 및 리더십 (5~6개)
    - 진로 계획 및 목표 (4~5개)
    - 시사/사회 문제 인식 (4~5개)
    - 학교 특색 관련 질문 (4~5개)
+4. 중학생이 답변할 수 있는 수준의 개방형 질문
 
-4. 각 질문은:
-   - 중학생이 답변할 수 있는 수준
-   - 구체적이고 명확한 표현
-   - 학생의 생각과 경험을 이끌어낼 수 있는 개방형 질문
-
-반드시 정확히 ${count}개의 질문을 생성하세요.
-각 질문은 줄바꿈으로 구분해주세요. 번호는 붙이지 마세요.`;
+정확히 ${count}개의 질문을 줄바꿈으로 구분하여 생성하세요. 번호 없이.`;
 
     const content = await callAI([
       { role: 'system', content: systemPrompt },
       { role: 'user', content: `${schoolInfo.name} 면접을 위한 공통 질문 ${count}개를 생성해주세요.` }
     ], 0.8);
 
-    // Parse questions from response
     const questions = content
       .split('\n')
       .map((q: string) => q.trim())
