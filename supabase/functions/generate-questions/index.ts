@@ -6,66 +6,20 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// School information for customized prompts
 const SCHOOL_INFO: Record<string, { name: string; keywords: string[]; focus: string }> = {
-  cheongshim: {
-    name: '청심국제고등학교',
-    keywords: ['ACG 교육', '글로벌 리더', '기숙사', '가평', '건학 이념'],
-    focus: 'ACG 교육 철학에 대한 이해, 글로벌 리더십, 기숙사 생활 적응력, 봉사정신'
-  },
-  hana: {
-    name: '하나고등학교',
-    keywords: ['자기주도학습', '창의융합', '하나정신', '전인교육'],
-    focus: '자기주도학습 능력, 창의적 문제해결력, 하나정신(정직, 봉사, 창의)에 대한 이해'
-  },
-  sangsan: {
-    name: '상산고등학교',
-    keywords: ['과학영재', '수학과학', '연구역량', 'STEM'],
-    focus: '수학·과학 탐구 능력, 논리적 사고력, 연구에 대한 열정, 학문적 호기심'
-  },
-  minsa: {
-    name: '민족사관고등학교',
-    keywords: ['민족정신', '한국학', '전통문화', '글로벌'],
-    focus: '민족정신과 정체성, 한국 문화에 대한 이해, 글로벌 시각, 리더십'
-  },
-  daewon: {
-    name: '대원외국어고등학교',
-    keywords: ['외국어 교육', '국제화', '어학 역량', '글로벌 인재'],
-    focus: '외국어 능력, 국제 감각, 문화적 다양성 이해, 의사소통 능력'
-  },
-  daeil: {
-    name: '대일외국어고등학교',
-    keywords: ['외국어', '인성교육', '글로벌 역량'],
-    focus: '외국어 학습 경험, 인성, 국제 이해, 자기주도성'
-  },
-  myungduk: {
-    name: '명덕외국어고등학교',
-    keywords: ['외국어', '창의인재', '글로벌 소양'],
-    focus: '창의성, 외국어 능력, 글로벌 마인드, 학업 열정'
-  },
-  gyeonggi: {
-    name: '경기외국어고등학교',
-    keywords: ['외국어', '국제화', '다문화 이해'],
-    focus: '외국어 학습 동기, 국제 이슈 관심, 다문화 이해, 학업 계획'
-  },
-  busan: {
-    name: '부산국제고등학교',
-    keywords: ['국제화', 'IB 과정', '글로벌 리더'],
-    focus: 'IB 교육에 대한 이해, 국제적 감각, 비판적 사고, 학업 열정'
-  },
-  incheon: {
-    name: '인천외국어고등학교',
-    keywords: ['외국어', '국제교류', '어학 역량'],
-    focus: '외국어 능력, 국제 감각, 자기주도학습, 진로 계획'
-  },
-  other: {
-    name: '자율형 사립고/외국어고',
-    keywords: ['자기주도학습', '창의성', '리더십', '학업 역량'],
-    focus: '자기주도학습 능력, 진로 목표, 학업 열정, 인성'
-  }
+  cheongshim: { name: '청심국제고등학교', keywords: ['ACG 교육', '글로벌 리더', '기숙사', '가평', '건학 이념'], focus: 'ACG 교육 철학에 대한 이해, 글로벌 리더십, 기숙사 생활 적응력, 봉사정신' },
+  hana: { name: '하나고등학교', keywords: ['자기주도학습', '창의융합', '하나정신', '전인교육'], focus: '자기주도학습 능력, 창의적 문제해결력, 하나정신(정직, 봉사, 창의)에 대한 이해' },
+  sangsan: { name: '상산고등학교', keywords: ['과학영재', '수학과학', '연구역량', 'STEM'], focus: '수학·과학 탐구 능력, 논리적 사고력, 연구에 대한 열정, 학문적 호기심' },
+  minsa: { name: '민족사관고등학교', keywords: ['민족정신', '한국학', '전통문화', '글로벌'], focus: '민족정신과 정체성, 한국 문화에 대한 이해, 글로벌 시각, 리더십' },
+  daewon: { name: '대원외국어고등학교', keywords: ['외국어 교육', '국제화', '어학 역량', '글로벌 인재'], focus: '외국어 능력, 국제 감각, 문화적 다양성 이해, 의사소통 능력' },
+  daeil: { name: '대일외국어고등학교', keywords: ['외국어', '인성교육', '글로벌 역량'], focus: '외국어 학습 경험, 인성, 국제 이해, 자기주도성' },
+  myungduk: { name: '명덕외국어고등학교', keywords: ['외국어', '창의인재', '글로벌 소양'], focus: '창의성, 외국어 능력, 글로벌 마인드, 학업 열정' },
+  gyeonggi: { name: '경기외국어고등학교', keywords: ['외국어', '국제화', '다문화 이해'], focus: '외국어 학습 동기, 국제 이슈 관심, 다문화 이해, 학업 계획' },
+  busan: { name: '부산국제고등학교', keywords: ['국제화', 'IB 과정', '글로벌 리더'], focus: 'IB 교육에 대한 이해, 국제적 감각, 비판적 사고, 학업 열정' },
+  incheon: { name: '인천외국어고등학교', keywords: ['외국어', '국제교류', '어학 역량'], focus: '외국어 능력, 국제 감각, 자기주도학습, 진로 계획' },
+  other: { name: '자율형 사립고/외국어고', keywords: ['자기주도학습', '창의성', '리더십', '학업 역량'], focus: '자기주도학습 능력, 진로 목표, 학업 열정, 인성' }
 };
 
-// Input validation schema
 const requestSchema = z.object({
   essay: z.string().trim().min(10, '자기소개서는 최소 10자 이상이어야 합니다.').max(10000, '자기소개서는 최대 10,000자까지 입력 가능합니다.'),
   count: z.number().int().min(1).max(50).optional().default(10),
@@ -78,6 +32,79 @@ const requestSchema = z.object({
   }).optional(),
 });
 
+async function callAI(messages: Array<{role: string; content: string}>, temperature: number) {
+  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+  const CEREBRAS_API_KEY = Deno.env.get('CEREBRAS_API_KEY');
+  if (!LOVABLE_API_KEY && !CEREBRAS_API_KEY) {
+    throw new Error('API 키가 설정되지 않았습니다.');
+  }
+
+  const requestBody = {
+    model: 'google/gemini-2.5-flash',
+    messages,
+    temperature,
+  };
+
+  let response: Response;
+
+  if (LOVABLE_API_KEY) {
+    response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (response.status === 402 && CEREBRAS_API_KEY) {
+      console.log('Lovable AI 크레딧 소진, Cerebras로 전환합니다...');
+      response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${CEREBRAS_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...requestBody, model: 'llama-4-scout-17b-16e-instruct' }),
+      });
+    }
+  } else {
+    response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${CEREBRAS_API_KEY!}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...requestBody, model: 'llama-4-scout-17b-16e-instruct' }),
+    });
+  }
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('AI API error:', response.status, errorText);
+    throw new Error(`AI API 오류: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.choices[0].message.content;
+}
+
+async function researchSchool(schoolName: string): Promise<string> {
+  console.log('Step 1: Researching school info for:', schoolName);
+
+  const researchPrompt = `당신은 한국의 고등학교 입시 전문가입니다.
+"${schoolName}"에 대해 자소서 기반 면접 질문 생성에 필요한 구체적인 정보를 조사해주세요.
+
+다음 내용을 포함해주세요:
+1. 학교의 정식 명칭과 유형
+2. 학교의 교육 철학과 핵심 가치
+3. 학교의 독특한 프로그램이나 커리큘럼
+4. 학교가 면접에서 중시하는 역량과 인재상
+5. 학교의 위치, 기숙사 여부, 특별한 전통
+6. 자소서에서 학교가 중요시하는 포인트
+
+가능한 한 구체적이고 정확한 정보를 제공해주세요.`;
+
+  const content = await callAI([
+    { role: 'system', content: '당신은 한국 고등학교 입시 전문가입니다. 구체적이고 정확한 학교 정보를 제공합니다.' },
+    { role: 'user', content: researchPrompt }
+  ], 0.3);
+
+  console.log('School research completed, length:', content.length);
+  return content;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -86,7 +113,6 @@ serve(async (req) => {
   try {
     const rawBody = await req.json();
     
-    // Validate input
     const validationResult = requestSchema.safeParse(rawBody);
     if (!validationResult.success) {
       return new Response(
@@ -97,13 +123,7 @@ serve(async (req) => {
     
     const { essay, count, school, customSchoolInfo } = validationResult.data;
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    const CEREBRAS_API_KEY = Deno.env.get('CEREBRAS_API_KEY');
-    if (!LOVABLE_API_KEY && !CEREBRAS_API_KEY) {
-      throw new Error('API 키가 설정되지 않았습니다.');
-    }
-
-    // Get school-specific information
+    // Get base school info
     let schoolInfo;
     if (school.startsWith('custom:') && customSchoolInfo) {
       schoolInfo = {
@@ -115,13 +135,23 @@ serve(async (req) => {
       schoolInfo = SCHOOL_INFO[school] || SCHOOL_INFO['cheongshim'];
     }
 
-    // Calculate question distribution based on count
-    const baseQuestions = Math.floor(count * 0.6); // 60% from essay
-    const expandedQuestions = count - baseQuestions; // 40% expanded topics
+    // Step 1: Research the school for detailed info
+    const schoolResearch = await researchSchool(schoolInfo.name);
+
+    // Step 2: Generate questions using enriched school info + essay
+    console.log('Step 2: Generating essay-based questions with enriched school info');
+
+    const baseQuestions = Math.floor(count * 0.6);
+    const expandedQuestions = count - baseQuestions;
 
     const systemPrompt = `당신은 ${schoolInfo.name} 면접관입니다. 자기소개서를 읽고 학생에게 물어볼 질문들을 생성합니다.
 
-학교 특성:
+아래는 AI가 조사한 "${schoolInfo.name}"에 대한 상세 정보입니다. 이 정보를 충분히 반영하여 질문을 생성하세요.
+
+**AI 조사 학교 정보:**
+${schoolResearch}
+
+**추가 학교 특성:**
 - 핵심 키워드: ${schoolInfo.keywords.join(', ')}
 - 면접 중점 사항: ${schoolInfo.focus}
 
@@ -130,12 +160,10 @@ serve(async (req) => {
    - 자소서에 쓴 경험이나 생각을 더 깊이 알아보는 질문
    - "왜 그렇게 생각했어?", "그때 어떻게 했어?" 같은 구체적인 질문
    - 학생의 가치관, 동기, 진로를 자연스럽게 묻는 질문
-   - ${schoolInfo.name}의 특성과 연결된 질문 포함
+   - 위 학교 조사 결과에서 나온 구체적인 프로그램, 교육 철학, 인재상과 자소서 내용을 연결한 질문 포함
 
 2. 관련 주제 확장 질문 (${expandedQuestions}개):
    - 자소서에서 다룬 내용을 보고 면접관이 추가로 궁금해할 만한 질문
-   - 예: 수학/과학 공부법을 썼다면 → 국어, 영어, 사회 등 다른 과목의 학습 방식 질문
-   - 예: 특정 활동을 언급했다면 → 관련된 다른 활동이나 경험에 대한 질문
    - ${schoolInfo.name}에서 중요시하는 역량(${schoolInfo.focus})과 관련된 질문
 
 총 ${count}개의 질문을 만들되, 각 질문은 한 줄로 간단하게 작성하세요.
@@ -147,74 +175,25 @@ ${essay}
 
 각 질문은 줄바꿈으로 구분해주세요.`;
 
-    console.log('Calling AI to generate questions for school:', school);
+    const content = await callAI([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ], 0.8);
 
-    const requestBody = {
-      model: 'google/gemini-2.5-flash',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ],
-      temperature: 0.8,
-    };
-
-    let response: Response;
-    
-    if (LOVABLE_API_KEY) {
-      response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (response.status === 402 && CEREBRAS_API_KEY) {
-        console.log('Lovable AI 크레딧 소진, Cerebras로 전환합니다...');
-        response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${CEREBRAS_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ ...requestBody, model: 'llama-4-scout-17b-16e-instruct' }),
-        });
-      }
-    } else {
-      response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${CEREBRAS_API_KEY!}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ...requestBody, model: 'llama-4-scout-17b-16e-instruct' }),
-      });
-    }
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('AI API error:', response.status, errorText);
-      throw new Error(`AI API 오류: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const content = data.choices[0].message.content;
-
-    // Parse questions from response
+    // Parse questions
     const questions = content
       .split('\n')
       .map((q: string) => q.trim())
       .filter((q: string) => q.length > 10 && !q.match(/^\d+\.|^[-*]/))
       .slice(0, count);
 
-    // Shuffle questions randomly using Fisher-Yates algorithm
+    // Shuffle
     for (let i = questions.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [questions[i], questions[j]] = [questions[j], questions[i]];
     }
 
-    console.log('Generated questions:', questions);
+    console.log('Generated questions:', questions.length);
 
     return new Response(
       JSON.stringify({ questions }),
@@ -225,10 +204,7 @@ ${essay}
     console.error('Error:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
