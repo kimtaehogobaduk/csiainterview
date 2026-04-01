@@ -350,6 +350,48 @@ export type Database = {
         }
         Relationships: []
       }
+      school_research_cache: {
+        Row: {
+          characteristics: string | null
+          common_questions: Json | null
+          created_at: string | null
+          detailed_info: string | null
+          id: string
+          interview_focus: string | null
+          keywords: Json | null
+          school_key: string
+          school_name: string
+          school_type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          characteristics?: string | null
+          common_questions?: Json | null
+          created_at?: string | null
+          detailed_info?: string | null
+          id?: string
+          interview_focus?: string | null
+          keywords?: Json | null
+          school_key: string
+          school_name: string
+          school_type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          characteristics?: string | null
+          common_questions?: Json | null
+          created_at?: string | null
+          detailed_info?: string | null
+          id?: string
+          interview_focus?: string | null
+          keywords?: Json | null
+          school_key?: string
+          school_name?: string
+          school_type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       user_customization: {
         Row: {
           avatar_frame_id: string | null

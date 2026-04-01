@@ -144,17 +144,19 @@ const CommonInterview = () => {
 
   // Load school-specific questions when school changes
   useEffect(() => {
-    if (desiredSchool && desiredSchool !== 'cheongshim') {
-      loadSchoolQuestions();
-    } else if (desiredSchool === 'cheongshim') {
+    if (desiredSchool === 'cheongshim') {
       // Use default questions for cheongshim
       setSchoolQuestions(COMMON_QUESTIONS);
       const randomIndex = Math.floor(Math.random() * COMMON_QUESTIONS.length);
       setCurrentQuestionIndex(randomIndex);
       setQuestion(COMMON_QUESTIONS[randomIndex]);
       setSchoolName("청심국제고등학교");
+    } else if (desiredSchool) {
+      // For custom schools, don't wait for customSchoolInfo - the edge function
+      // will look up the cache by school key directly
+      loadSchoolQuestions();
     }
-  }, [desiredSchool, customSchoolInfo]);
+  }, [desiredSchool]);
 
   const loadSchoolQuestions = async () => {
     setLoadingQuestions(true);
