@@ -77,15 +77,25 @@ const Community = () => {
 
     setUser(session.user);
 
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", session.user.id)
-      .in("role", ["admin", "elder"]);
+    const [{ data: roles }, { data: profile }] = await Promise.all([
+      supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .in("role", ["admin", "elder"]),
+      supabase
+        .from("profiles")
+        .select("desired_school")
+        .eq("id", session.user.id)
+        .single(),
+    ]);
 
     if (roles) {
       setIsAdmin(roles.some(r => r.role === "admin"));
       setIsElder(roles.some(r => r.role === "elder"));
+    }
+    if (profile?.desired_school) {
+      setDesiredSchool(profile.desired_school);
     }
   };
 
