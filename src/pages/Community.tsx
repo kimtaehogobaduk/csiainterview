@@ -50,6 +50,7 @@ const Community = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
+  const [desiredSchool, setDesiredSchool] = useState<string>('cheongshim');
 
   useEffect(() => {
     checkAuth();
