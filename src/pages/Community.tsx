@@ -14,6 +14,7 @@ import type { User as SupabaseUser } from "@supabase/supabase-js";
 import Footer from "@/components/Footer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import FeedbackDialog from "@/components/FeedbackDialog";
+import SchoolNewsFeed from "@/components/SchoolNewsFeed";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { z } from "zod";
@@ -49,6 +50,7 @@ const Community = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
+  const [desiredSchool, setDesiredSchool] = useState<string>('cheongshim');
 
   useEffect(() => {
     checkAuth();
@@ -75,15 +77,25 @@ const Community = () => {
 
     setUser(session.user);
 
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", session.user.id)
-      .in("role", ["admin", "elder"]);
+    const [{ data: roles }, { data: profile }] = await Promise.all([
+      supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .in("role", ["admin", "elder"]),
+      supabase
+        .from("profiles")
+        .select("desired_school")
+        .eq("id", session.user.id)
+        .single(),
+    ]);
 
     if (roles) {
       setIsAdmin(roles.some(r => r.role === "admin"));
       setIsElder(roles.some(r => r.role === "elder"));
+    }
+    if (profile?.desired_school) {
+      setDesiredSchool(profile.desired_school);
     }
   };
 
@@ -378,6 +390,7 @@ const Community = () => {
 
       <main className="container mx-auto px-4 py-4 md:py-8">
         <div className="max-w-4xl mx-auto space-y-3 md:space-y-4">
+          <SchoolNewsFeed desiredSchool={desiredSchool} />
           {posts.map((post) => (
             <Card key={post.id} className={isMobile ? "text-sm" : ""}>
               <CardHeader className={isMobile ? "p-4 pb-2" : ""}>
