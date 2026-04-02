@@ -14,6 +14,7 @@ import type { User as SupabaseUser } from "@supabase/supabase-js";
 import Footer from "@/components/Footer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import FeedbackDialog from "@/components/FeedbackDialog";
+import SchoolNewsFeed from "@/components/SchoolNewsFeed";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { z } from "zod";
