@@ -234,7 +234,7 @@ const Index = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-muted-foreground leading-relaxed">
-                청심국제고 입시에 대해 자유롭게 이야기를 나누세요
+                특목고 입시에 대해 자유롭게 이야기를 나누세요
               </p>
               <Button className="w-full bg-gradient-secondary hover:opacity-90 transition-all group-hover:shadow-soft">
                 참여하기
