@@ -390,6 +390,7 @@ const Community = () => {
 
       <main className="container mx-auto px-4 py-4 md:py-8">
         <div className="max-w-4xl mx-auto space-y-3 md:space-y-4">
+          <SchoolNewsFeed desiredSchool={desiredSchool} />
           {posts.map((post) => (
             <Card key={post.id} className={isMobile ? "text-sm" : ""}>
               <CardHeader className={isMobile ? "p-4 pb-2" : ""}>
