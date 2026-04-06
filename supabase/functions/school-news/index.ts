@@ -33,7 +33,8 @@ async function callAI(messages: Array<{role: string; content: string}>, temperat
       headers: { 'Authorization': `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody),
     });
-    if (response.status === 402 && CEREBRAS_API_KEY) {
+    if (!response.ok && CEREBRAS_API_KEY) {
+      console.log(`Lovable AI failed (${response.status}), falling back to Cerebras`);
       response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${CEREBRAS_API_KEY}`, 'Content-Type': 'application/json' },
