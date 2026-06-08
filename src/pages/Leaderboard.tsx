@@ -12,7 +12,6 @@ interface LeaderboardEntry {
   total_mileage: number;
   rank: number;
   full_name: string;
-  email: string;
   avatar_frame?: any;
   badge?: any;
   theme_color?: string;
