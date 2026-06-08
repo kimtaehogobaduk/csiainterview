@@ -574,21 +574,6 @@ export type Database = {
       }
     }
     Views: {
-      public_profiles: {
-        Row: {
-          full_name: string | null
-          id: string | null
-        }
-        Insert: {
-          full_name?: string | null
-          id?: string | null
-        }
-        Update: {
-          full_name?: string | null
-          id?: string | null
-        }
-        Relationships: []
-      }
       user_approval_requests: {
         Row: {
           approved_at: string | null
@@ -633,6 +618,13 @@ export type Database = {
           p_user_id: string
         }
         Returns: undefined
+      }
+      get_public_profiles: {
+        Args: { _user_ids: string[] }
+        Returns: {
+          full_name: string
+          id: string
+        }[]
       }
       has_role: {
         Args: {
