@@ -108,17 +108,23 @@ const Community = () => {
       .order("created_at", { ascending: false });
 
     if (data) {
-      const postsWithProfiles = await Promise.all(
-        data.map(async (post) => {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("full_name")
-            .eq("id", post.user_id)
-            .single();
-          
-          return { ...post, profiles: profile };
-        })
-      );
+      const userIds = Array.from(new Set(data.map((p: any) => p.user_id)));
+      let profilesMap: Record<string, { full_name: string | null }> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase.rpc("get_public_profiles", {
+          _user_ids: userIds,
+        });
+        if (profiles) {
+          profilesMap = (profiles as any[]).reduce((acc, p) => {
+            acc[p.id] = { full_name: p.full_name };
+            return acc;
+          }, {} as Record<string, { full_name: string | null }>);
+        }
+      }
+      const postsWithProfiles = data.map((post: any) => ({
+        ...post,
+        profiles: profilesMap[post.user_id] || null,
+      }));
       setPosts(postsWithProfiles);
     }
   };
