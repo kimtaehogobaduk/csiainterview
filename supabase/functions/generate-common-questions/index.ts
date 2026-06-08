@@ -175,6 +175,32 @@ serve(async (req) => {
     const schoolInfo = await getSchoolInfo(school, customSchoolInfo);
     console.log('Generating questions for:', schoolInfo.name);
 
+    // Try to use pre-generated cached question pool for instant response
+    try {
+      const supabaseAdmin = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      );
+      const schoolKey = schoolInfo.name.trim().toLowerCase().replace(/\s+/g, '');
+      const { data: cachedRow } = await supabaseAdmin
+        .from('school_research_cache')
+        .select('common_questions')
+        .eq('school_key', schoolKey)
+        .single();
+      const pool = (cachedRow?.common_questions as string[] | undefined) || [];
+      if (pool.length >= count) {
+        // Shuffle and slice
+        const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, count);
+        console.log('Returning cached pool questions:', shuffled.length);
+        return new Response(
+          JSON.stringify({ questions: shuffled, schoolName: schoolInfo.name, cached: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } catch (e) {
+      console.log('Cache pool lookup failed, falling back to live generation:', e);
+    }
+
     const systemPrompt = `당신은 ${schoolInfo.name} 입학 면접 전문가입니다.
 
 **학교 상세 정보:**
