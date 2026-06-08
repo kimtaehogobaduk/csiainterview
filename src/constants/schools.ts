@@ -4,11 +4,11 @@ export const SCHOOLS = [
   { value: 'sangsan', label: '상산고등학교' },
   { value: 'minsa', label: '민족사관고등학교' },
   { value: 'daewon', label: '대원외국어고등학교' },
-  { value: 'daeil', label: '대일외국어고등학교' },
-  { value: 'myungduk', label: '명덕외국어고등학교' },
-  { value: 'gyeonggi', label: '경기외국어고등학교' },
+  { value: 'daejungsin', label: '대전신성고등학교' },
+  { value: 'seoulscience', label: '서울과학고등학교' },
+  { value: 'hansungscience', label: '한성과학고등학교' },
+  { value: 'hwimun', label: '휘문고등학교' },
   { value: 'busan', label: '부산국제고등학교' },
-  { value: 'incheon', label: '인천외국어고등학교' },
   { value: 'other', label: '기타' }
 ] as const;
 
@@ -55,23 +55,29 @@ export const SCHOOL_INFO: Record<string, {
     characteristics: '대원외고는 뛰어난 외국어 능력과 국제적 감각을 갖춘 인재 양성을 목표로 합니다. 서울에 위치합니다.',
     interviewFocus: '외국어 능력, 국제 감각, 문화적 다양성 이해, 의사소통 능력'
   },
-  daeil: {
-    name: '대일외국어고등학교',
-    keywords: ['외국어', '인성교육', '서울', '글로벌 역량'],
-    characteristics: '대일외고는 외국어 능력과 인성을 겸비한 글로벌 인재 양성을 목표로 합니다.',
-    interviewFocus: '외국어 학습 경험, 인성, 국제 이해, 자기주도성'
+  daejungsin: {
+    name: '대전신성고등학교',
+    keywords: ['과학중점', '자사고', '대전', '연구역량', 'STEM'],
+    characteristics: '대전신성고는 과학 중점 자율형 사립고등학교로, 과학·수학 심화 교육과 연구 역량 강화를 목표로 합니다.',
+    interviewFocus: '과학·수학 탐구 능력, 논리적 사고력, 연구 열정, 자기주도학습'
   },
-  myungduk: {
-    name: '명덕외국어고등학교',
-    keywords: ['외국어', '창의인재', '서울', '글로벌 소양'],
-    characteristics: '명덕외고는 창의적 사고와 글로벌 소양을 갖춘 인재 양성을 목표로 합니다.',
-    interviewFocus: '창의성, 외국어 능력, 글로벌 마인드, 학업 열정'
+  seoulscience: {
+    name: '서울과학고등학교',
+    keywords: ['영재고', '과학영재', '서울', '연구역량', 'R&E'],
+    characteristics: '서울과학고는 국내 최고의 과학 영재 고등학교로, 심화된 과학·수학 교육과 독자적인 연구 프로그램을 운영합니다.',
+    interviewFocus: '과학·수학 탐구 능력, 논리적 사고력, 연구에 대한 열정, 학문적 호기심'
   },
-  gyeonggi: {
-    name: '경기외국어고등학교',
-    keywords: ['외국어', '경기', '국제화', '다문화 이해'],
-    characteristics: '경기외고는 경기 지역을 대표하는 외국어 특성화 고등학교입니다.',
-    interviewFocus: '외국어 학습 동기, 국제 이슈 관심, 다문화 이해, 학업 계획'
+  hansungscience: {
+    name: '한성과학고등학교',
+    keywords: ['영재고', '과학영재', '서울', '창의융합', 'R&E'],
+    characteristics: '한성과학고는 창의융합형 과학 영재 양성을 목표로 하는 서울의 대표 과학 영재 고등학교입니다.',
+    interviewFocus: '과학·수학 탐구 능력, 창의적 문제해결력, 연구 열정, 융합적 사고'
+  },
+  hwimun: {
+    name: '휘문고등학교',
+    keywords: ['자사고', '인성교육', '서울', '창의융합', '글로벌 역량'],
+    characteristics: '휘문고는 서울의 대표적인 자율형 사립고등학교로, 인성 교육과 창의융합 역량 강화를 중시합니다.',
+    interviewFocus: '자기주도학습 능력, 창의적 문제해결력, 인성, 진로 목표'
   },
   busan: {
     name: '부산국제고등학교',
@@ -79,16 +85,10 @@ export const SCHOOL_INFO: Record<string, {
     characteristics: '부산국제고는 IB 과정을 운영하며 글로벌 인재 양성을 목표로 합니다.',
     interviewFocus: 'IB 교육에 대한 이해, 국제적 감각, 비판적 사고, 학업 열정'
   },
-  incheon: {
-    name: '인천외국어고등학교',
-    keywords: ['외국어', '인천', '국제교류', '어학 역량'],
-    characteristics: '인천외고는 인천 지역의 대표적인 외국어 특성화 고등학교입니다.',
-    interviewFocus: '외국어 능력, 국제 감각, 자기주도학습, 진로 계획'
-  },
   other: {
-    name: '자율형 사립고/외국어고',
+    name: '특목고/자사고/영재고/외국어고',
     keywords: ['자기주도학습', '창의성', '리더십', '학업 역량'],
-    characteristics: '자율형 사립고 및 외국어고는 자기주도적 학습 능력과 창의적 인재 양성을 목표로 합니다.',
+    characteristics: '특수목적고, 자율형 사립고, 영재고 및 외국어고는 자기주도적 학습 능력과 창의적 인재 양성을 목표로 합니다.',
     interviewFocus: '자기주도학습 능력, 진로 목표, 학업 열정, 인성'
   }
 };

@@ -40,10 +40,11 @@ const SCHOOL_NAMES: Record<string, string> = {
   sangsan: '상산고등학교',
   minsa: '민족사관고등학교',
   daewon: '대원외국어고등학교',
-  daeil: '대일외국어고등학교',
-  myungduk: '명덕외국어고등학교',
-  hansung: '한성과학고등학교',
-  sejong: '세종과학고등학교',
+  daejungsin: '대전신성고등학교',
+  seoulscience: '서울과학고등학교',
+  hansungscience: '한성과학고등학교',
+  hwimun: '휘문고등학교',
+  busan: '부산국제고등학교',
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
