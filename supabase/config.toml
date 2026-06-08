@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.import-migration-data]
 verify_jwt = false
+
+[functions.background-school-refresh]
+verify_jwt = false
