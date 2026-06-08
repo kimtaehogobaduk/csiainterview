@@ -8,8 +8,8 @@ const corsHeaders = {
 
 const PREDEFINED_SCHOOLS = [
   '청심국제고등학교', '하나고등학교', '상산고등학교', '민족사관고등학교',
-  '대원외국어고등학교', '대일외국어고등학교', '명덕외국어고등학교',
-  '경기외국어고등학교', '부산국제고등학교', '인천외국어고등학교',
+  '대원외국어고등학교', '대전신성고등학교', '서울과학고등학교',
+  '한성과학고등학교', '휘문고등학교', '부산국제고등학교',
 ];
 
 async function callAI(messages: Array<{role: string; content: string}>, temperature = 0.5) {
