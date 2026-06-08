@@ -12,7 +12,6 @@ interface LeaderboardEntry {
   total_mileage: number;
   rank: number;
   full_name: string;
-  email: string;
   avatar_frame?: any;
   badge?: any;
   theme_color?: string;
@@ -54,9 +53,7 @@ const Leaderboard = () => {
       // Get user profiles
       const userIds = leaderboardData.map(entry => entry.user_id);
       const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, full_name, email')
-        .in('id', userIds);
+        .rpc('get_public_profiles', { _user_ids: userIds });
 
       if (profilesError) throw profilesError;
 
@@ -108,7 +105,6 @@ const Leaderboard = () => {
           total_mileage: entry.total_mileage,
           rank: index + 1,
           full_name: profile?.full_name || '익명',
-          email: profile?.email || '',
           avatar_frame: avatarFrame,
           badge: badge,
           theme_color: customization?.theme_color,

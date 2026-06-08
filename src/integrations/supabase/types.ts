@@ -619,6 +619,13 @@ export type Database = {
         }
         Returns: undefined
       }
+      get_public_profiles: {
+        Args: { _user_ids: string[] }
+        Returns: {
+          full_name: string
+          id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
