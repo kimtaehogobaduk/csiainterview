@@ -75,7 +75,7 @@ serve(async (req) => {
             'Authorization': `Bearer ${CEREBRAS_API_KEY}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ ...requestBody, model: 'llama-4-scout-17b-16e-instruct' }),
+          body: JSON.stringify({ ...requestBody, model: 'gpt-oss-120b' }),
         });
       }
     } else {
@@ -85,7 +85,7 @@ serve(async (req) => {
           'Authorization': `Bearer ${CEREBRAS_API_KEY!}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ...requestBody, model: 'llama-4-scout-17b-16e-instruct' }),
+        body: JSON.stringify({ ...requestBody, model: 'gpt-oss-120b' }),
       });
     }
 

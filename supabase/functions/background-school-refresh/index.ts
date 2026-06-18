@@ -30,14 +30,14 @@ async function callAI(messages: Array<{role: string; content: string}>, temperat
       res = await fetch('https://api.cerebras.ai/v1/chat/completions', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${CEREBRAS_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...body, model: 'llama-4-scout-17b-16e-instruct' }),
+        body: JSON.stringify({ ...body, model: 'gpt-oss-120b' }),
       });
     }
   } else {
     res = await fetch('https://api.cerebras.ai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${CEREBRAS_API_KEY!}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...body, model: 'llama-4-scout-17b-16e-instruct' }),
+      body: JSON.stringify({ ...body, model: 'gpt-oss-120b' }),
     });
   }
   if (!res.ok) throw new Error(`AI ${res.status}: ${await res.text()}`);
