@@ -364,7 +364,7 @@ ${essay}
       // Fallback to Cerebras on 402 (credits exhausted)
       if (response.status === 402 && CEREBRAS_API_KEY) {
         console.log('Lovable AI 크레딧 소진, Cerebras로 전환합니다...');
-        const cerebrasBody = { ...requestBody, model: 'llama-4-scout-17b-16e-instruct' };
+        const cerebrasBody = { ...requestBody, model: 'gpt-oss-120b' };
         response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -375,7 +375,7 @@ ${essay}
         });
       }
     } else {
-      const cerebrasBody = { ...requestBody, model: 'llama-4-scout-17b-16e-instruct' };
+      const cerebrasBody = { ...requestBody, model: 'gpt-oss-120b' };
       response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
         method: 'POST',
         headers: {

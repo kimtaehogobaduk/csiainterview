@@ -83,14 +83,14 @@ async function callAI(messages: Array<{role: string; content: string}>, temperat
       response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${CEREBRAS_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...requestBody, model: 'llama-4-scout-17b-16e-instruct' }),
+        body: JSON.stringify({ ...requestBody, model: 'gpt-oss-120b' }),
       });
     }
   } else {
     response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${CEREBRAS_API_KEY!}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...requestBody, model: 'llama-4-scout-17b-16e-instruct' }),
+      body: JSON.stringify({ ...requestBody, model: 'gpt-oss-120b' }),
     });
   }
 
