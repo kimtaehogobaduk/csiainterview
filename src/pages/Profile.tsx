@@ -458,6 +458,14 @@ const [profile, setProfile] = useState<Profile>({
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">내 정보</h1>
           <p className="text-muted-foreground">프로필 관리 및 학습 기록 확인</p>
+          {isGuest && (
+            <div className="mt-4 p-3 rounded-lg border border-primary/30 bg-primary/5 text-sm flex items-center justify-between gap-3">
+              <span>
+                게스트 모드입니다. 설정은 이 기기에만 저장되며, 로그인하시면 다른 기기와 동기화하고 학습 기록·마일리지를 사용할 수 있어요.
+              </span>
+              <Button size="sm" onClick={() => navigate("/auth")}>로그인</Button>
+            </div>
+          )}
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
