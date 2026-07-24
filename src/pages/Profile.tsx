@@ -79,6 +79,24 @@ const [profile, setProfile] = useState<Profile>({
   const [customSchoolInfo, setCustomSchoolInfo] = useState<any>(null);
   const [showCustomSchoolInput, setShowCustomSchoolInput] = useState(false);
   const [practiceLoading, setPracticeLoading] = useState(false);
+  const isGuest = !user;
+  const GUEST_KEY = "guest_profile_settings";
+
+  const loadGuestProfile = () => {
+    try {
+      const raw = localStorage.getItem(GUEST_KEY);
+      if (raw) {
+        const g = JSON.parse(raw);
+        setProfile((p) => ({ ...p, ...g }));
+        if (typeof g.desired_school === "string" && g.desired_school.startsWith("custom:")) {
+          setShowCustomSchoolInput(true);
+          setCustomSchoolName(g.desired_school.replace("custom:", ""));
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load guest profile:", e);
+    }
+  };
 
   useEffect(() => {
     loadUserData();
@@ -87,7 +105,9 @@ const [profile, setProfile] = useState<Profile>({
   const loadUserData = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      navigate("/auth");
+      // Guest mode: load settings from localStorage
+      loadGuestProfile();
+      setStatsLoading(false);
       return;
     }
 
@@ -213,10 +233,22 @@ const [profile, setProfile] = useState<Profile>({
   };
 
   const handleUpdateProfile = async () => {
-    if (!user) return;
-
     setLoading(true);
     try {
+      if (!user) {
+        // Guest: persist locally
+        const toSave = {
+          full_name: profile.full_name,
+          ai_model: profile.ai_model,
+          essay_question_count: profile.essay_question_count,
+          enable_camera: profile.enable_camera,
+          desired_school: profile.desired_school,
+        };
+        localStorage.setItem(GUEST_KEY, JSON.stringify(toSave));
+        toast.success("설정이 이 기기에 저장되었습니다. (로그인 시 다른 기기와 동기화됩니다)");
+        setLoading(false);
+        return;
+      }
       const { error } = await supabase
         .from("profiles")
         .update({ 

@@ -127,7 +127,7 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" onClick={() => handleProtectedAction(() => navigate("/profile"))} className="hover:bg-primary/10 transition-all">
+              <Button variant="ghost" onClick={() => navigate("/profile")} className="hover:bg-primary/10 transition-all">
                 <User className="h-5 w-5 mr-2" />
                 내 정보
               </Button>
