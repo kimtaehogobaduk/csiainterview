@@ -55,7 +55,7 @@ ${essay}`;
     console.log('Checking essay...');
 
     const requestBody = {
-      model: 'google/gemini-2.5-flash',
+      model: 'google/gemini-3.8-flash',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }

@@ -120,7 +120,7 @@ const CommonInterview = () => {
     feedback: string;
     score: number | null;
   }>>([]);
-  const [selectedModel, setSelectedModel] = useState("google/gemini-2.5-flash");
+  const [selectedModel, setSelectedModel] = useState("google/gemini-3.8-flash");
   const [desiredSchool, setDesiredSchool] = useState("cheongshim");
   const [customSchoolInfo, setCustomSchoolInfo] = useState<any>(null);
   const [schoolQuestions, setSchoolQuestions] = useState<string[]>([]);
@@ -209,7 +209,7 @@ const CommonInterview = () => {
         .single();
       
       if (data && !error) {
-        setSelectedModel(data.ai_model || 'google/gemini-2.5-flash');
+        setSelectedModel(data.ai_model || 'google/gemini-3.8-flash');
         setEnableCamera(data.enable_camera || false);
         const schoolValue = (data as any).desired_school || 'cheongshim';
         setDesiredSchool(schoolValue);

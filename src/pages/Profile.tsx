@@ -57,7 +57,7 @@ const Profile = () => {
 const [profile, setProfile] = useState<Profile>({ 
     full_name: "", 
     email: "",
-    ai_model: "google/gemini-2.5-flash",
+    ai_model: "google/gemini-3.8-flash",
     essay_question_count: 10,
     mileage: 0,
     enable_camera: false,
@@ -132,7 +132,7 @@ const [profile, setProfile] = useState<Profile>({
     setProfile({
       full_name: data.full_name || "",
       email: data.email || "",
-      ai_model: data.ai_model || "google/gemini-2.5-flash",
+      ai_model: data.ai_model || "google/gemini-3.8-flash",
       essay_question_count: data.essay_question_count || 10,
       mileage: data.mileage || 0,
       enable_camera: data.enable_camera || false,

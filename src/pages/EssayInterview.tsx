@@ -123,7 +123,7 @@ const EssayInterview = () => {
     feedback: string;
     score: number | null;
   }>>([]);
-  const [selectedModel, setSelectedModel] = useState("google/gemini-2.5-flash");
+  const [selectedModel, setSelectedModel] = useState("google/gemini-3.8-flash");
   const [questionCount, setQuestionCount] = useState(10);
   const [desiredSchool, setDesiredSchool] = useState("cheongshim");
   const [customSchoolInfo, setCustomSchoolInfo] = useState<any>(null);
@@ -165,7 +165,7 @@ const EssayInterview = () => {
         .single();
       
       if (data && !error) {
-        setSelectedModel(data.ai_model || 'google/gemini-2.5-flash');
+        setSelectedModel(data.ai_model || 'google/gemini-3.8-flash');
         setQuestionCount(data.essay_question_count || 10);
         setEnableCamera(data.enable_camera || false);
         const schoolValue = (data as any).desired_school || 'cheongshim';
