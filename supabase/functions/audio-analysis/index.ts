@@ -109,7 +109,7 @@ serve(async (req) => {
       : `공통 면접 질문: ${question}\n\n답변 텍스트: "${transcription.text}"\n\n위 답변을 음성 분석 데이터와 함께 평가해주세요.`;
 
     const aiRequestBody = {
-      model: 'google/gemini-2.5-flash',
+      model: 'google/gemini-3.8-flash',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }

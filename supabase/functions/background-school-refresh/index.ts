@@ -17,7 +17,7 @@ async function callAI(messages: Array<{role: string; content: string}>, temperat
   const CEREBRAS_API_KEY = Deno.env.get('CEREBRAS_API_KEY');
   if (!LOVABLE_API_KEY && !CEREBRAS_API_KEY) throw new Error('No AI key');
 
-  const body = { model: 'google/gemini-2.5-flash', messages, temperature };
+  const body = { model: 'google/gemini-3.8-flash', messages, temperature };
   let res: Response;
 
   if (LOVABLE_API_KEY) {

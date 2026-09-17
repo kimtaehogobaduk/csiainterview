@@ -318,7 +318,7 @@ ${essay}
     console.log('Calling AI with prompt for school:', school);
 
     // Check if model supports temperature parameter
-    const selectedModel = model || 'google/gemini-2.5-flash';
+    const selectedModel = model || 'google/gemini-3.8-flash';
     const isNewOpenAIModel = selectedModel.includes('gpt-5') || 
                               selectedModel.includes('gpt-4.1') || 
                               selectedModel.includes('o3') || 

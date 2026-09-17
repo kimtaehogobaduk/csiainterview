@@ -44,7 +44,7 @@ serve(async (req) => {
 ["질문1", "질문2", ..., "질문200"]`;
 
     const requestBody = {
-      model: 'google/gemini-2.5-flash',
+      model: 'google/gemini-3.8-flash',
       messages: [
         { role: 'system', content: systemPrompt },
         { 

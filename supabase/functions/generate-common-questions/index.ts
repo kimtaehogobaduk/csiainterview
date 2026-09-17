@@ -69,7 +69,7 @@ async function callAI(messages: Array<{role: string; content: string}>, temperat
   const CEREBRAS_API_KEY = Deno.env.get('CEREBRAS_API_KEY');
   if (!LOVABLE_API_KEY && !CEREBRAS_API_KEY) throw new Error('API 키가 설정되지 않았습니다.');
 
-  const requestBody = { model: 'google/gemini-2.5-flash', messages, temperature };
+  const requestBody = { model: 'google/gemini-3.8-flash', messages, temperature };
   let response: Response;
 
   if (LOVABLE_API_KEY) {

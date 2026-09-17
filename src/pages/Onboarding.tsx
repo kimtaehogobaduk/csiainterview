@@ -10,9 +10,9 @@ import { Loader2, School, Brain, Sparkles, ArrowRight, Search } from "lucide-rea
 import { SCHOOLS, SCHOOL_INFO } from "@/constants/schools";
 
 const AI_MODELS = [
-  { value: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash (권장)', description: '빠르고 정확한 응답' },
-  { value: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro', description: '더 깊은 분석과 피드백' },
-  { value: 'openai/gpt-5-mini', label: 'GPT-5 Mini', description: '균형 잡힌 성능' },
+  { value: 'google/gemini-3.8-flash', label: 'Gemini 2.5 Flash (권장)', description: '빠르고 정확한 응답' },
+  { value: 'google/gemini-3.1-pro-preview', label: 'Gemini 2.5 Pro', description: '더 깊은 분석과 피드백' },
+  { value: 'openai/gpt-5.4-mini', label: 'GPT-5 Mini', description: '균형 잡힌 성능' },
 ];
 
 const Onboarding = () => {
@@ -26,7 +26,7 @@ const Onboarding = () => {
   const [customSchoolName, setCustomSchoolName] = useState("");
   const [showCustomSchoolInput, setShowCustomSchoolInput] = useState(false);
   const [researchingSchool, setResearchingSchool] = useState(false);
-  const [aiModel, setAiModel] = useState("google/gemini-2.5-flash");
+  const [aiModel, setAiModel] = useState("google/gemini-3.8-flash");
   const [questionCount, setQuestionCount] = useState(10);
   const [fullName, setFullName] = useState("");
 
