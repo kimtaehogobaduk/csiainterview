@@ -7,12 +7,12 @@ interface ModelSelectorProps {
 }
 
 const models = [
-  { value: "google/gemini-3.8-flash", label: "Gemini 2.5 Flash (권장)" },
-  { value: "google/gemini-3.1-pro-preview", label: "Gemini 2.5 Pro (강력)" },
-  { value: "google/gemini-3.1-flash-lite", label: "Gemini 2.5 Flash Lite (빠름)" },
-  { value: "openai/gpt-5.5", label: "GPT-5 (최고)" },
-  { value: "openai/gpt-5.4-mini", label: "GPT-5 Mini (균형)" },
-  { value: "openai/gpt-5-nano", label: "GPT-5 Nano (빠름)" },
+  { value: "google/gemini-3.8-flash", label: "Gemini 3.8 Flash (권장)" },
+  { value: "google/gemini-3.1-pro-preview", label: "Gemini 3.1 Pro (강력)" },
+  { value: "google/gemini-3.1-flash-lite", label: "Gemini 3.1 Flash Lite (빠름)" },
+  { value: "openai/gpt-5.5", label: "GPT-5.5 (최고)" },
+  { value: "openai/gpt-5.4-mini", label: "GPT-5.4 Mini (균형)" },
+  { value: "openai/gpt-5.4-nano", label: "GPT-5.4 Nano (빠름)" },
 ];
 
 const ModelSelector = ({ value, onChange }: ModelSelectorProps) => {

@@ -317,8 +317,19 @@ ${essay}
 
     console.log('Calling AI with prompt for school:', school);
 
+    // Map legacy model ids saved in older profiles to current models
+    const LEGACY_MODEL_MAP: Record<string, string> = {
+      'google/gemini-2.5-flash': 'google/gemini-3.8-flash',
+      'google/gemini-2.5-flash-lite': 'google/gemini-3.1-flash-lite',
+      'google/gemini-2.5-pro': 'google/gemini-3.1-pro-preview',
+      'openai/gpt-5': 'openai/gpt-5.5',
+      'openai/gpt-5-mini': 'openai/gpt-5.4-mini',
+      'openai/gpt-5-nano': 'openai/gpt-5.4-nano',
+    };
+
     // Check if model supports temperature parameter
-    const selectedModel = model || 'google/gemini-3.8-flash';
+    const requestedModel = model || 'google/gemini-3.8-flash';
+    const selectedModel = LEGACY_MODEL_MAP[requestedModel] || requestedModel;
     const isNewOpenAIModel = selectedModel.includes('gpt-5') || 
                               selectedModel.includes('gpt-4.1') || 
                               selectedModel.includes('o3') || 
